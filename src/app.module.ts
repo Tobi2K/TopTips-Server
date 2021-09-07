@@ -23,6 +23,7 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
       database: 'tippspiel',
       entities: [User, Game, Guess, SpecialBet, Team],
       namingStrategy: new SnakeNamingStrategy(),
+      synchronize: true
     }),
     UsersModule,
     GameModule,
