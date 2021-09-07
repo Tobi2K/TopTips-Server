@@ -24,17 +24,17 @@ export class GameService {
     getGameday(day: number): Promise<Game[]> {
         return this.gameRepository.createQueryBuilder("game").where("game.spieltag = :day", {
             day
-        }).getMany();
+        }).orderBy("game.date").getMany();
     }
 
     async addGame(body: CreateGameDto) {
         const game = new Game;
         game.spieltag = body.gameday;
         game.date = body.date;
-        //game.team1 = body.team1;
-        //game.team2 = body.team2;
+        game.team1_id = body.team1;
+        game.team2_id = body.team2;
         const count = await this.gameRepository.createQueryBuilder("game").where("game.spieltag = :day", { day: body.gameday }).getCount();
-        //game.special_bet_id = count;
+        game.special_bet_id = count;
         this.gameRepository.save(game)
     }
 
