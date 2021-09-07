@@ -33,8 +33,8 @@ export class GameService {
         game.date = body.date;
         game.team1_id = body.team1;
         game.team2_id = body.team2;
-        const count = await this.gameRepository.createQueryBuilder("game").where("game.spieltag = :day", { day: body.gameday }).getCount();
-        game.special_bet_id = count;
+        //const count = await this.gameRepository.createQueryBuilder("game").where("game.spieltag = :day", { day: body.gameday }).getCount();
+        game.special_bet_id = Math.floor(Math.random() * (8 + 1));;
         this.gameRepository.save(game)
     }
 
