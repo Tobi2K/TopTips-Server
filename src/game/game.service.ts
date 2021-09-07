@@ -17,8 +17,7 @@ import {
 @Injectable()
 export class GameService {
     constructor(
-        @InjectRepository(Game) private gameRepository: Repository<Game>,
-        private connection: Connection
+        @InjectRepository(Game) private gameRepository: Repository<Game>
     ) { }
 
     getGameday(day: number): Promise<Game[]> {
