@@ -45,8 +45,8 @@ export class PointsService {
         let pointsPlayer2 = 0;
         let pointsPlayer3 = 0;
         if (player1) pointsPlayer1 = this.calculatePoints(game, player1);
-        if (player2) pointsPlayer1 = this.calculatePoints(game, player2);
-        if (player3) pointsPlayer1 = this.calculatePoints(game, player3);
+        if (player2) pointsPlayer2 = this.calculatePoints(game, player2);
+        if (player3) pointsPlayer3 = this.calculatePoints(game, player3);
 
         const existingPoints = await this.connection.getRepository(Points).findOne({
             where: { game_id: game_id }
@@ -93,8 +93,6 @@ export class PointsService {
         if (points == 4) points++;
 
         if (guess_sb == actual_sb) points++;
-
-        console.log(points);
 
         return points;
     }
