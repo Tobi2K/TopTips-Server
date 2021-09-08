@@ -71,3 +71,14 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](LICENSE).
+
+
+## Commands
+
+```bash
+# build
+docker build -t tippspiel-backend:latest .
+
+# run
+docker run -d --restart unless-stopped --network host  tippspiel-backend:latest
+```
