@@ -11,6 +11,8 @@ import { Team } from './database/entities/team.entity';
 import { GuessModule } from './guess/guess.module';
 import { Guess } from './database/entities/guess.entity';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+import { PointsModule } from './points/points.module';
+import { Points } from './database/entities/points.entity';
 
 @Module({
   imports: [
@@ -21,13 +23,13 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
       username: 'root',
       password: 'root',
       database: 'tippspiel',
-      entities: [User, Game, Guess, SpecialBet, Team],
-      namingStrategy: new SnakeNamingStrategy(),
-      synchronize: true
+      entities: [User, Game, Guess, SpecialBet, Team, Points],
+      namingStrategy: new SnakeNamingStrategy()
     }),
     UsersModule,
     GameModule,
-    GuessModule
+    GuessModule,
+    PointsModule
   ],
   controllers: [AppController],
   providers: [AppService],

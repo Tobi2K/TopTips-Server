@@ -12,17 +12,10 @@ export class GuessService {
     constructor(
         @InjectRepository(Guess)
         private guessRepository: Repository<Guess>,
-        private gameService: GameService,
         private connection: Connection
     ) { }
 
     async getGameday(day: number) {
-        const ids = await this.gameService.getGameday(day);
-        let x = [];
-        for (let index = 0; index < ids.length; index++) {
-            const element = ids[index].game_id;
-            x.push(element)
-        }
         return this.guessRepository.createQueryBuilder("game").leftJoin('game.game_id', 'guess').where('game.game_id = guess.game_id', { id: day }).getMany();
     }
 

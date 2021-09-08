@@ -6,6 +6,7 @@ import {
 } from '@nestjs/typeorm';
 import { CreateGameDto } from 'src/dtos/create-game.dto';
 import { UpdateGameDto } from 'src/dtos/update-game.dto';
+import { PointsService } from 'src/points/points.service';
 import {
     Repository,
     Connection
@@ -17,7 +18,8 @@ import {
 @Injectable()
 export class GameService {
     constructor(
-        @InjectRepository(Game) private gameRepository: Repository<Game>
+        @InjectRepository(Game) private gameRepository: Repository<Game>,
+        private readonly pointsService: PointsService
     ) { }
 
     getGameday(day: number): Promise<Game[]> {
@@ -32,9 +34,8 @@ export class GameService {
         game.date = body.date;
         game.team1_id = body.team1;
         game.team2_id = body.team2;
-        //const count = await this.gameRepository.createQueryBuilder("game").where("game.spieltag = :day", { day: body.gameday }).getCount();
-        game.special_bet_id = Math.floor(Math.random() * (8 + 1));;
-        this.gameRepository.save(game)
+        game.special_bet_id = Math.floor(Math.random() * (8 + 1));
+        this.gameRepository.save(game);
     }
 
     async deleteGame(id: number) {
@@ -42,12 +43,13 @@ export class GameService {
     }
 
     async updateGame(body: UpdateGameDto, id: number) {
-        return await this.gameRepository.update({
+        await this.gameRepository.update({
             game_id: id,
         }, {
             score_team1: body.team1,
             score_team2: body.team2,
             special_bet: body.bet
         })
+        this.pointsService.calculateGamePoints(id);
     }
 }
