@@ -75,7 +75,7 @@ export class PointsService {
         const guess_t2 = guess.score_team2;
         const guess_sb = guess.special_bet;
 
-        const guess_dif = Math.abs(guess_t1 - guess_t2);
+        const guess_dif = guess_t1 - guess_t2;
         const guess_winner = guess_t1 > guess_t2 ? 1 : (guess_t1 < guess_t2 ? 2 : 0);
 
 
@@ -83,7 +83,7 @@ export class PointsService {
         const actual_t2 = game.score_team2;
         const actual_sb = game.special_bet;
 
-        const actual_dif = Math.abs(actual_t1 - actual_t2)
+        const actual_dif = actual_t1 - actual_t2;
         const actual_winner = actual_t1 > actual_t2 ? 1 : (actual_t1 < actual_t2 ? 2 : 0);
 
         if (guess_t1 == actual_t1) points++;
