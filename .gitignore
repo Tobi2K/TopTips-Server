@@ -32,3 +32,5 @@ lerna-debug.log*
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+tippspiel-19914-firebase-adminsdk-dgecm-432900a038.json

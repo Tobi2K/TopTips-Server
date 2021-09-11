@@ -13,6 +13,9 @@ import { Guess } from './database/entities/guess.entity';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { PointsModule } from './points/points.module';
 import { Points } from './database/entities/points.entity';
+import { ScheduleModule } from '@nestjs/schedule';
+import { CronService } from './cron/cron.service';
+
 
 @Module({
   imports: [
@@ -29,9 +32,10 @@ import { Points } from './database/entities/points.entity';
     UsersModule,
     GameModule,
     GuessModule,
-    PointsModule
+    PointsModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, CronService],
 })
 export class AppModule { }
