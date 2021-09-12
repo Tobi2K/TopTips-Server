@@ -11,7 +11,7 @@ export class CronService {
         private connection: Connection
     ) { }
 
-    @Cron(CronExpression.EVERY_DAY_AT_NOON)
+    @Cron(CronExpression.EVERY_DAY_AT_11AM)
     async handleCron() {
         console.log("Sending Notifications")
         const x = await this.connection.getRepository(Game).find({
@@ -22,7 +22,7 @@ export class CronService {
             const element = x[i].date;
             const currentDate = new Date();
             if (element.getFullYear() == currentDate.getFullYear() && element.getMonth() == currentDate.getMonth() && element.getDate() == currentDate.getDate()) {
-                console.log("Today");
+                console.log("There is a game today");
                 const topic = "games"
                 const message = {
                     notification: {
