@@ -15,6 +15,9 @@ import { PointsModule } from './points/points.module';
 import { Points } from './database/entities/points.entity';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CronService } from './cron/cron.service';
+import { SectionController } from './section/section.controller';
+import { SectionModule } from './section/section.module';
+import { Section } from './database/entities/section.entity';
 
 
 @Module({
@@ -26,13 +29,14 @@ import { CronService } from './cron/cron.service';
       username: 'root',
       password: 'root',
       database: 'tippspiel',
-      entities: [User, Game, Guess, SpecialBet, Team, Points],
+      entities: [User, Game, Guess, SpecialBet, Team, Points, Section],
       namingStrategy: new SnakeNamingStrategy()
     }),
     UsersModule,
     GameModule,
     GuessModule,
     PointsModule,
+    SectionModule,
     ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
