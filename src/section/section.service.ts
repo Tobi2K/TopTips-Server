@@ -16,24 +16,29 @@ export class SectionService {
         const x = await this.sectionRepository.find({
             order: { 'section_id': "ASC" }
         });
-        for (let i = 0; i < x.length; i++) {
-            const element = x[i].starting_date;
-            const currentDate = new Date();
-            if (element.getFullYear() == currentDate.getFullYear() && element.getMonth() == currentDate.getMonth() && element.getDate() == currentDate.getDate()) {
-                this.logger.debug("Today begins a new section.");
-                return x[i].section_id;
-            } else if (element.getFullYear() == currentDate.getFullYear() && element.getMonth() == currentDate.getMonth() && element.getDate() > currentDate.getDate()) {
-                this.logger.debug("Considered section begins too late. Returning last section.");
-                return x[i - 1].section_id;
-            } else if (element.getFullYear() == currentDate.getFullYear() && element.getMonth() > currentDate.getMonth()) {
-                this.logger.debug("Considered section begins too late. Returning last section.");
-                return x[i - 1].section_id;
-            } else if (element.getFullYear() > currentDate.getFullYear()) {
-                this.logger.debug("Considered section begins too late. Returning last section.");
-                return x[i - 1].section_id;
+        if (x != undefined) {
+
+            for (let i = 0; i < x.length; i++) {
+                const element = x[i].starting_date;
+                const currentDate = new Date();
+                if (element.getFullYear() == currentDate.getFullYear() && element.getMonth() == currentDate.getMonth() && element.getDate() == currentDate.getDate()) {
+                    this.logger.debug("Today begins a new section.");
+                    return x[i].section_id;
+                } else if (element.getFullYear() == currentDate.getFullYear() && element.getMonth() == currentDate.getMonth() && element.getDate() > currentDate.getDate()) {
+                    this.logger.debug("Considered section begins too late. Returning last section.");
+                    return x[i - 1].section_id;
+                } else if (element.getFullYear() == currentDate.getFullYear() && element.getMonth() > currentDate.getMonth()) {
+                    this.logger.debug("Considered section begins too late. Returning last section.");
+                    return x[i - 1].section_id;
+                } else if (element.getFullYear() > currentDate.getFullYear()) {
+                    this.logger.debug("Considered section begins too late. Returning last section.");
+                    return x[i - 1].section_id;
+                }
             }
+            return x[x.length - 1].section_id;
+        } else {
+            return 1;
         }
-        return x[x.length - 1].section_id;
     }
 
     async setDate(id: number, body: SetSectionDto) {
