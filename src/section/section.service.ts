@@ -16,7 +16,7 @@ export class SectionService {
         const x = await this.sectionRepository.find({
             order: { 'section_id': "ASC" }
         });
-        if (x != undefined) {
+        if (x != []) {
 
             for (let i = 0; i < x.length; i++) {
                 const element = x[i].starting_date;
@@ -35,10 +35,8 @@ export class SectionService {
                     return x[i - 1].section_id;
                 }
             }
-            return x[x.length - 1].section_id;
-        } else {
-            return 1;
         }
+        return 1;
     }
 
     async setDate(id: number, body: SetSectionDto) {
