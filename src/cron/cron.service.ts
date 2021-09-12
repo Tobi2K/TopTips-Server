@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 import * as admin from "firebase-admin";
@@ -7,13 +7,14 @@ import { Connection } from 'typeorm';
 
 @Injectable()
 export class CronService {
+    private readonly logger = new Logger(CronService.name);
     constructor(
-        private connection: Connection
+        private connection: Connection,
     ) { }
 
     @Cron(CronExpression.EVERY_DAY_AT_11AM)
     async handleCron() {
-        console.log("Sending Notifications")
+        this.logger.debug("Checking for games today")
         const x = await this.connection.getRepository(Game).find({
             select: ['date'],
             order: { 'date': "ASC" }
@@ -22,7 +23,7 @@ export class CronService {
             const element = x[i].date;
             const currentDate = new Date();
             if (element.getFullYear() == currentDate.getFullYear() && element.getMonth() == currentDate.getMonth() && element.getDate() == currentDate.getDate()) {
-                console.log("There is a game today");
+                this.logger.debug("There is a game today");
                 const topic = "games"
                 const message = {
                     notification: {
@@ -40,20 +41,20 @@ export class CronService {
                 admin.messaging().send(message)
                     .then((response) => {
                         // Response is a message ID string.
-                        console.log('Successfully sent message:', response);
+                        this.logger.debug('Successfully sent message:', response);
                     })
                     .catch((error) => {
-                        console.log('Error sending message:', error);
+                        this.logger.error('Error sending message:', error);
                     });
                 break;
             } else if (element.getFullYear() == currentDate.getFullYear() && element.getMonth() == currentDate.getMonth() && element.getDate() > currentDate.getDate()) {
-                console.log("Breaking because day is larger than today");
+                this.logger.debug("Breaking because day is larger than today");
                 break;
             } else if (element.getFullYear() == currentDate.getFullYear() && element.getMonth() > currentDate.getMonth()) {
-                console.log("Breaking because month is larger than today");
+                this.logger.debug("Breaking because month is larger than today");
                 break;
             } else if (element.getFullYear() > currentDate.getFullYear()) {
-                console.log("Breaking because year is larger than today");
+                this.logger.debug("Breaking because year is larger than today");
                 break;
             }
         }

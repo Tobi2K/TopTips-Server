@@ -1,5 +1,6 @@
 import {
-    Injectable
+    Injectable,
+    Logger
 } from '@nestjs/common';
 import {
     InjectRepository
@@ -8,8 +9,7 @@ import { CreateGameDto } from 'src/dtos/create-game.dto';
 import { UpdateGameDto } from 'src/dtos/update-game.dto';
 import { PointsService } from 'src/points/points.service';
 import {
-    Repository,
-    Connection
+    Repository
 } from 'typeorm';
 import {
     Game
@@ -17,6 +17,7 @@ import {
 
 @Injectable()
 export class GameService {
+    private readonly logger = new Logger(GameService.name);
     constructor(
         @InjectRepository(Game) private gameRepository: Repository<Game>,
         private readonly pointsService: PointsService
@@ -35,14 +36,18 @@ export class GameService {
         game.team1_id = body.team1;
         game.team2_id = body.team2;
         game.special_bet_id = Math.floor(Math.random() * (8 + 1));
-        this.gameRepository.save(game);
+        const x = await this.gameRepository.save(game);
+
+        this.logger.debug("Adding game with id: " + x.game_id);
     }
 
     async deleteGame(id: number) {
+        this.logger.debug("Deleting game with id: " + id);
         return this.gameRepository.remove(await this.gameRepository.createQueryBuilder("game").where("game.game_id = :id", { id }).getOne());
     }
 
     async updateGame(body: UpdateGameDto, id: number) {
+        this.logger.debug("Updating game with id: " + id)
         await this.gameRepository.update({
             game_id: id,
         }, {
