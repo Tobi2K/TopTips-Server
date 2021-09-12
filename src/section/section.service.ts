@@ -16,7 +16,7 @@ export class SectionService {
         const x = await this.sectionRepository.find({
             order: { 'section_id': "ASC" }
         });
-        if (x != []) {
+        if (x.length > 0) {
 
             for (let i = 0; i < x.length; i++) {
                 const element = x[i].starting_date;
@@ -35,7 +35,10 @@ export class SectionService {
                     return x[i - 1].section_id;
                 }
             }
+            this.logger.debug("Selecting last set value");
+            return x[x.length - 1].section_id
         }
+        this.logger.debug("Defaulting section to 1");
         return 1;
     }
 
