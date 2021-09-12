@@ -12,7 +12,7 @@ export class CronService {
         private connection: Connection,
     ) { }
 
-    @Cron(CronExpression.EVERY_DAY_AT_11AM)
+    @Cron(CronExpression.EVERY_DAY_AT_10AM)
     async handleCron() {
         this.logger.debug("Checking for games today")
         const x = await this.connection.getRepository(Game).find({
