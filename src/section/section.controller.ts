@@ -8,6 +8,11 @@ export class SectionController {
         private readonly sectionService: SectionService
     ) { }
 
+    @Get('all')
+    getSections() {
+        return this.sectionService.getSections();
+    }
+
     @Get('current')
     getCurrentSection() {
         return this.sectionService.getCurrentSection();

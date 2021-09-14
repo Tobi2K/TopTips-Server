@@ -9,12 +9,12 @@ export class PointsController {
     ) { }
 
     @Get('day/:id')
-    getGameday(@Param('id') id: number): Promise<Points[]> {
+    getGameday(@Param('id') id: number) {
         return this.pointsService.getGamedayPoints(id);
     }
 
     @Get('all')
-    getAllPoints(): Promise<Points[]> {
+    getAllPoints() {
         return this.pointsService.getAllPoints();
     }
 }

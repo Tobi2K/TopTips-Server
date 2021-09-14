@@ -59,6 +59,9 @@ export class SectionService {
                 starting_date: body.date
             });
         }
+    }
 
+    async getSections() {
+        return await this.sectionRepository.find();
     }
 }

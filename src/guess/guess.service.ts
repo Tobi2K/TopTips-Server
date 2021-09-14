@@ -50,6 +50,6 @@ export class GuessService {
     }
 
     async getAllGuesses() {
-        return await this.guessRepository.createQueryBuilder("game").getMany();
+        return await this.guessRepository.createQueryBuilder("guess").getMany();
     }
 }

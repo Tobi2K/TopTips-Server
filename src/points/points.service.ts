@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Game } from 'src/database/entities/game.entity';
 import { Guess } from 'src/database/entities/guess.entity';
 import { Points } from 'src/database/entities/points.entity';
-import { GameService } from 'src/game/game.service';
 import { GuessService } from 'src/guess/guess.service';
 import { Connection, Repository } from 'typeorm';
 
@@ -27,11 +26,27 @@ export class PointsService {
             });
             x.push(v);
         };
-        return x;
+        return this.sumPoints(x);
     }
 
     async getAllPoints() {
-        return this.pointRepository.createQueryBuilder("game").getMany();
+        const x = await this.pointRepository.createQueryBuilder("points").getMany();
+
+        return this.sumPoints(x);
+    }
+
+    sumPoints(points: Points[]) {
+        let pointsP1 = 0;
+        let pointsP2 = 0;
+        let pointsP3 = 0;
+        points.forEach(p => {
+            if (p != undefined) {
+                pointsP1 += p.points_player1;
+                pointsP2 += p.points_player2;
+                pointsP3 += p.points_player3;
+            }
+        });
+        return [pointsP1, pointsP2, pointsP3]
     }
 
     async calculateGamePoints(game_id: number) {
