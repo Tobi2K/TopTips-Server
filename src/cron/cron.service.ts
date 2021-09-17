@@ -35,7 +35,7 @@ export class CronService {
         private httpService: HttpService
     ) { }
 
-    @Cron(CronExpression.EVERY_DAY_AT_10AM)
+    @Cron("0 0 1 * * 0")
     async handleNotifications() {
         this.logger.debug("Checking for games today")
         const x = await this.connection.getRepository(Game).find({
@@ -85,7 +85,7 @@ export class CronService {
         }
     }
 
-    @Cron(CronExpression.EVERY_5_MINUTES)
+    @Cron(CronExpression.EVERY_WEEK)
     async syncGames() {
         this.logger.debug("Syncing games and times...");
         const data = (await this.httpService.get("https://api.sportradar.com/handball/trial/v2/en/seasons/sr:season:85804/summaries.json?api_key=75wxqg3r57z3cw8acsqfg9fw").toPromise()).data;
@@ -112,7 +112,6 @@ export class CronService {
         });
 
         const games_update = data.summaries.filter((e) => !["closed"].includes(e.sport_event_status.status))
-        console.log(games_update);
 
         games_update.forEach(async game => {
             const db = await gameRepository.findOne({ event_id: game.sport_event.id });
@@ -134,7 +133,7 @@ export class CronService {
     }
 
 
-    @Cron(CronExpression.EVERY_5_MINUTES)
+    @Cron("*/30 0,13-23 * * *")
     async syncScores() {
         this.logger.debug("Syncing scores...")
         const data = (await this.httpService.get("https://api.sportradar.com/handball/trial/v2/en/seasons/sr:season:85804/summaries.json?api_key=75wxqg3r57z3cw8acsqfg9fw").toPromise()).data;
