@@ -85,6 +85,7 @@ export class CronService {
         }
     }
 
+    @Cron(CronExpression.EVERY_5_MINUTES)
     async syncGames() {
         this.logger.debug("Syncing games and times...");
         const data = (await this.httpService.get("https://api.sportradar.com/handball/trial/v2/en/seasons/sr:season:85804/summaries.json?api_key=75wxqg3r57z3cw8acsqfg9fw").toPromise()).data;
@@ -133,6 +134,7 @@ export class CronService {
     }
 
 
+    @Cron(CronExpression.EVERY_5_MINUTES)
     async syncScores() {
         this.logger.debug("Syncing scores...")
         const data = (await this.httpService.get("https://api.sportradar.com/handball/trial/v2/en/seasons/sr:season:85804/summaries.json?api_key=75wxqg3r57z3cw8acsqfg9fw").toPromise()).data;
