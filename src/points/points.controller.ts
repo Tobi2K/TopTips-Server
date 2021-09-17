@@ -1,5 +1,4 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { Points } from 'src/database/entities/points.entity';
 import { PointsService } from './points.service';
 
 @Controller('points')

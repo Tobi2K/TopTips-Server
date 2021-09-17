@@ -7,6 +7,9 @@ export class Game {
     @PrimaryGeneratedColumn()
     game_id: number;
 
+    @Column({ type: 'varchar' })
+    event_id: string;
+
     @Column({ type: 'int' })
     spieltag: number;
 
@@ -36,4 +39,7 @@ export class Game {
 
     @Column({ type: 'int', default: 0 })
     special_bet: number;
+
+    @Column({ type: 'tinyint', default: 0 })
+    completed: number;
 }

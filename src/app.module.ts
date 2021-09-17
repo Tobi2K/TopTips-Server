@@ -18,6 +18,8 @@ import { CronService } from './cron/cron.service';
 import { SectionController } from './section/section.controller';
 import { SectionModule } from './section/section.module';
 import { Section } from './database/entities/section.entity';
+import { CronController } from './cron/cron.controller';
+import { CronModule } from './cron/cron.module';
 
 
 @Module({
@@ -37,9 +39,10 @@ import { Section } from './database/entities/section.entity';
     GuessModule,
     PointsModule,
     SectionModule,
+    CronModule,
     ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
-  providers: [AppService, CronService],
+  providers: [AppService],
 })
 export class AppModule { }
