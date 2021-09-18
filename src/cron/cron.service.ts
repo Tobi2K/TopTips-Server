@@ -35,7 +35,7 @@ export class CronService {
         private httpService: HttpService
     ) { }
 
-    @Cron(CronExpression.EVERY_DAY_AT_10AM)
+    @Cron(CronExpression.EVERY_DAY_AT_NOON)
     async handleNotifications() {
         this.logger.debug("Checking for games today")
         const x = await this.connection.getRepository(Game).find({
@@ -85,7 +85,7 @@ export class CronService {
         }
     }
 
-    @Cron("0 0 23 * * 0")
+    @Cron("0 0 1 * * 1")
     async syncGames() {
         this.logger.debug("Syncing games and times...");
         const data = (await this.httpService.get("https://api.sportradar.com/handball/trial/v2/en/seasons/sr:season:85804/summaries.json?api_key=75wxqg3r57z3cw8acsqfg9fw").toPromise()).data;
@@ -133,7 +133,7 @@ export class CronService {
     }
 
 
-    @Cron("*/30 11-22 * * *")
+    @Cron("*/30 0,13-23 * * *")
     async syncScores() {
         this.logger.debug("Syncing scores...")
         const data = (await this.httpService.get("https://api.sportradar.com/handball/trial/v2/en/seasons/sr:season:85804/summaries.json?api_key=75wxqg3r57z3cw8acsqfg9fw").toPromise()).data;

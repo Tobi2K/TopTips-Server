@@ -2,6 +2,8 @@ FROM node:14
 
 ENV APP_PORT 3000
 
+ENV TZ=Europe/Berlin
+
 EXPOSE 3000
 
 WORKDIR /usr/src/app
