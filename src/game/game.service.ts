@@ -33,6 +33,14 @@ export class GameService {
         }).orderBy("game.date").getMany();
     }
 
+    async getAllGames() {
+        const games = [];
+        for (let i = 1; i < 35; i++) {
+            games.push(await this.getGameday(i));
+        }
+        return games;
+    }
+
     async addGame(body: CreateGameDto) {
         const game = new Game;
         game.spieltag = body.gameday;

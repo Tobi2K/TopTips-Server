@@ -25,6 +25,11 @@ export class GameController {
         return this.gameService.getGameday(id);
     }
 
+    @Get('all')
+    getAllGames() {
+        return this.gameService.getAllGames();
+    }
+
     @Post('add')
     async addGame(@Body() body: CreateGameDto) {
         return this.gameService.addGame(body);
