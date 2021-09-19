@@ -190,4 +190,21 @@ export class CronService {
                 return 0;
         }
     }
+
+    @Cron(CronExpression.EVERY_30_MINUTES)
+    async syncDates() {
+        this.logger.debug("Syncing dates...")
+        const data = (await this.httpService.get("https://api.sportradar.com/handball/trial/v2/en/seasons/sr:season:85804/summaries.json?api_key=75wxqg3r57z3cw8acsqfg9fw").toPromise()).data;
+        const gameRepository = this.connection.getRepository(Game);
+
+
+
+        data.summaries.forEach(async game => {
+            const db = await gameRepository.findOne({ event_id: game.sport_event.id });
+            if (!db) {
+                return;
+            }
+            this.gameService.updateGameDate(db.game_id, game.sport_event.start_time);
+        });
+    }
 }
