@@ -191,7 +191,6 @@ export class CronService {
         }
     }
 
-    @Cron(CronExpression.EVERY_10_MINUTES)
     async syncDates() {
         this.logger.debug("Syncing dates...")
         const data = (await this.httpService.get("https://api.sportradar.com/handball/trial/v2/en/seasons/sr:season:85804/summaries.json?api_key=75wxqg3r57z3cw8acsqfg9fw").toPromise()).data;
