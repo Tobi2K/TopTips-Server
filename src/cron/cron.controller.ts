@@ -16,4 +16,9 @@ export class CronController {
     syncScores() {
         return this.cronService.syncScores();
     }
+
+    @Get('sync/dates')
+    syncDate() {
+        return this.cronService.syncDates();
+    }
 }

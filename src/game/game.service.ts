@@ -86,9 +86,10 @@ export class GameService {
     }
 
     async updateGameDate(id: number, date: Date) {
+        this.logger.debug("Updating game date for id: " + id);
+
         await this.gameRepository.update({
-            game_id: id,
-            completed: 0
+            game_id: id
         }, {
             date: date
         })
