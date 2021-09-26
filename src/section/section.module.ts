@@ -7,6 +7,6 @@ import { SectionService } from './section.service';
 @Module({
   imports: [TypeOrmModule.forFeature([Section])],
   providers: [SectionService],
-  controllers: [SectionController]
+  controllers: [SectionController],
 })
-export class SectionModule { }
+export class SectionModule {}

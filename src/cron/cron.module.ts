@@ -10,8 +10,8 @@ import { CronController } from './cron.controller';
 import { CronService } from './cron.service';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Game, Points, Guess]), HttpModule],
-    providers: [GameService, CronService, PointsService, GuessService],
-    controllers: [CronController]
+  imports: [TypeOrmModule.forFeature([Game, Points, Guess]), HttpModule],
+  providers: [GameService, CronService, PointsService, GuessService],
+  controllers: [CronController],
 })
-export class CronModule { }
+export class CronModule {}

@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Game } from 'src/database/entities/game.entity';
 import { Guess } from 'src/database/entities/guess.entity';
 import { Points } from 'src/database/entities/points.entity';
-import { GameService } from 'src/game/game.service';
 import { GuessService } from 'src/guess/guess.service';
 import { PointsController } from './points.controller';
 import { PointsService } from './points.service';
@@ -11,6 +10,6 @@ import { PointsService } from './points.service';
 @Module({
   imports: [TypeOrmModule.forFeature([Points, Game, Guess])],
   providers: [PointsService, GuessService],
-  controllers: [PointsController]
+  controllers: [PointsController],
 })
-export class PointsModule { }
+export class PointsModule {}

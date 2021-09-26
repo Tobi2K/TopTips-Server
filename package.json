@@ -29,6 +29,7 @@
     "@nestjs/swagger": "^4.8.2",
     "@nestjs/typeorm": "^7.1.5",
     "firebase-admin": "^9.11.1",
+    "moment": "^2.29.1",
     "mysql2": "^2.3.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",

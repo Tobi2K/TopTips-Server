@@ -1,3 +1,3 @@
 export class SetSectionDto {
-    date: Date;
+  date: Date;
 }

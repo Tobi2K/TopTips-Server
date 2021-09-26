@@ -11,6 +11,6 @@ import { Guess } from 'src/database/entities/guess.entity';
 @Module({
   imports: [TypeOrmModule.forFeature([Game, Points, Guess])],
   providers: [GameService, PointsService, GuessService],
-  controllers: [GameController]
+  controllers: [GameController],
 })
-export class GameModule { }
+export class GameModule {}

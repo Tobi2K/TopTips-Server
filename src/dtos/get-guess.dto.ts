@@ -1,4 +1,4 @@
 export class GetGuessDto {
-    gameID: number;
-    user: number;
+  gameID: number;
+  user: number;
 }

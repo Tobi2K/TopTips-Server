@@ -8,8 +8,8 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
-    private connection: Connection
-  ) { }
+    private connection: Connection,
+  ) {}
 
   findAll(): Promise<User[]> {
     return this.usersRepository.find();
