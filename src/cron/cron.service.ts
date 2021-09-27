@@ -40,7 +40,7 @@ export class CronService {
     gamedayResult.forEach((e) => {
       if (!gamedays.includes(e.spieltag)) gamedays.push(e.spieltag);
     });
-    gamedays.sort((n1, n2) => n1 - n2);
+    gamedays.sort((x, y) => x - y);
 
     if (gamedays.length == 0) {
       this.logger.debug('No Games Today');
