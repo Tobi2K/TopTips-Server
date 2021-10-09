@@ -28,4 +28,5 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
-          tags: tippspiel-backend:latest
+          push: true
+          tags: ghcr.io/tobi2k/tippspiel:latest
