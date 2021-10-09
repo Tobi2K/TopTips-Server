@@ -64,7 +64,9 @@ export class CronService {
         body: 'Heute finden Spiele statt. ' + days,
       },
       android: {
+        priority: 'high' as any,
         notification: {
+          priority: 'max' as any,
           channelId: 'Games',
         },
       },
