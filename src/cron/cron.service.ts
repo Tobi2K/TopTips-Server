@@ -98,7 +98,7 @@ export class CronService {
 
     const gameRepository = this.connection.getRepository(Game);
 
-    const new_games: any[] = (
+    const new_games_temp: any[] = (
       await Promise.all(
         data.summaries.map(async (e: { sport_event: { id: any } }) => {
           const db = await gameRepository.findOne({
@@ -110,23 +110,51 @@ export class CronService {
       )
     ).filter(Boolean);
 
+    const new_games: any[] = new_games_temp.filter(
+      (e) => !['postponed'].includes(e.sport_event_status.status),
+    );
+
     new_games.forEach(async (game) => {
-      const dto = new CreateGameDto();
-      dto.date = game.sport_event.start_time;
-      dto.eventID = game.sport_event.id;
-      dto.team1 = await this.mapTeamID(
+      const team1 = await this.mapTeamID(
         game.sport_event['competitors'].filter((e) =>
           ['home'].includes(e.qualifier),
         )[0].id,
       );
-      dto.team2 = await this.mapTeamID(
+      const team2 = await this.mapTeamID(
         game.sport_event['competitors'].filter((e) =>
           ['away'].includes(e.qualifier),
         )[0].id,
       );
-      dto.gameday = game.sport_event.sport_event_context.round.number;
 
-      this.gameService.addGame(dto);
+      const db = await gameRepository.findOne({
+        spieltag: game.sport_event.sport_event_context.round.number,
+        team1_id: team1,
+        team2_id: team2,
+      });
+      if (!db) {
+        const dto = new CreateGameDto();
+        dto.date = game.sport_event.start_time;
+        dto.eventID = game.sport_event.id;
+        dto.team1 = team1;
+        dto.team2 = team2;
+        dto.gameday = game.sport_event.sport_event_context.round.number;
+
+        this.gameService.addGame(dto);
+      } else {
+        this.logger.debug('Duplicate game with id: ' + db.game_id);
+
+        // game between these teams and on the same gameday exists => duplicate
+        await gameRepository.update(
+          {
+            spieltag: game.sport_event.sport_event_context.round.number,
+            team1_id: team1,
+            team2_id: team2,
+          },
+          {
+            event_id: game.sport_event.id,
+          },
+        );
+      }
     });
 
     const games_update = data.summaries.filter(
