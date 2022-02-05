@@ -1,18 +1,6 @@
-import {
-  forwardRef,
-  HttpException,
-  HttpService,
-  HttpStatus,
-  Inject,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { GroupMembers } from 'src/database/entities/group-members.entity';
 import { Group } from 'src/database/entities/group.entity';
-import { Guess } from 'src/database/entities/guess.entity';
-import { Points } from 'src/database/entities/points.entity';
-import { Season } from 'src/database/entities/season.entity';
 import { SpecialBet } from 'src/database/entities/special-bet.entity';
 import { User } from 'src/database/entities/user.entity';
 import { CreateGameDto } from 'src/dtos/create-game.dto';
