@@ -1,9 +1,16 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { Season } from 'src/database/entities/season.entity';
+import { Connection } from 'typeorm';
 import { CronService } from './cron.service';
 
 @Controller('cron')
+@ApiBearerAuth('access-token')
 export class CronController {
-  constructor(private readonly cronService: CronService) {}
+  constructor(
+    private readonly cronService: CronService,
+    private readonly connection: Connection,
+  ) {}
 
   @Get('sync/games')
   syncGames() {
@@ -15,6 +22,11 @@ export class CronController {
     return this.cronService.syncScores();
   }
 
+  @Get('sync/score/last')
+  lastSyncScores() {
+    return this.cronService.lastsyncScores();
+  }
+
   @Get('sync/dates')
   syncDate() {
     return this.cronService.syncDates();
@@ -22,11 +34,35 @@ export class CronController {
 
   @Get('sync/scores')
   resyncScores() {
-    return this.cronService.updateAllScores();
+    return this.cronService.updateAllScores(require('../../example.json'));
   }
 
   @Get('notify')
   handleNotifications() {
     return this.cronService.handleNotifications();
+  }
+
+  @Get('sync/leagues')
+  syncLeagues() {
+    return this.cronService.syncLeagues();
+  }
+
+  @Get('sync/seasons')
+  syncSeasons() {
+    return this.cronService.syncSeasons();
+  }
+
+  @Get('sync/seasons/:season_id')
+  async syncSingleSeason(@Param('season_id') season_id: string) {
+    const season = await this.connection
+      .getRepository(Season)
+      .findOne({ where: { season_id: season_id } });
+
+    return this.cronService.syncGamesForNewGroup(season);
+  }
+
+  @Get('sync/teams')
+  syncTeams() {
+    return this.cronService.syncTeams();
   }
 }

@@ -17,6 +17,19 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { SectionModule } from './section/section.module';
 import { Section } from './database/entities/section.entity';
 import { CronModule } from './cron/cron.module';
+import { AuthModule } from './auth/auth.module';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { APP_GUARD } from '@nestjs/core';
+import { Group } from './database/entities/group.entity';
+import { GroupMembers } from './database/entities/group-members.entity';
+import { GroupController } from './group/group.controller';
+import { GroupModule } from './group/group.module';
+import { JwtModule } from '@nestjs/jwt';
+import { jwtConstants } from './auth/constants';
+import { Competition } from './database/entities/competition.entity';
+import { ConfigModule } from '@nestjs/config';
+import { Season } from './database/entities/season.entity';
+import { CompetitionModule } from './competition/competition.module';
 
 @Module({
   imports: [
@@ -26,9 +39,22 @@ import { CronModule } from './cron/cron.module';
       port: 3306,
       username: 'root',
       password: 'root',
-      database: 'tippspiel',
-      entities: [User, Game, Guess, SpecialBet, Team, Points, Section],
+      database: 'tippspiel_test',
+      entities: [
+        User,
+        Game,
+        Guess,
+        SpecialBet,
+        Team,
+        Points,
+        Section,
+        Group,
+        GroupMembers,
+        Competition,
+        Season,
+      ],
       namingStrategy: new SnakeNamingStrategy(),
+      synchronize: true,
     }),
     UsersModule,
     GameModule,
@@ -37,8 +63,18 @@ import { CronModule } from './cron/cron.module';
     SectionModule,
     CronModule,
     ScheduleModule.forRoot(),
+    ConfigModule.forRoot(),
+    AuthModule,
+    GroupModule,
+    CompetitionModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
 export class AppModule {}

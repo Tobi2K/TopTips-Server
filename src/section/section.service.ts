@@ -14,7 +14,7 @@ export class SectionService {
 
   async getCurrentSection() {
     const x = await this.sectionRepository.find({
-      order: { section_id: 'ASC' },
+      order: { id: 'ASC' },
     });
     if (x.length > 0) {
       for (let i = 0; i < x.length; i++) {
@@ -26,7 +26,7 @@ export class SectionService {
           element.getDate() == currentDate.getDate()
         ) {
           this.logger.debug('Today begins a new section.');
-          return x[i].section_id;
+          return x[i].id;
         } else if (
           element.getFullYear() == currentDate.getFullYear() &&
           element.getMonth() == currentDate.getMonth() &&
@@ -35,7 +35,7 @@ export class SectionService {
           this.logger.debug(
             'Considered section begins too late. Returning last section.',
           );
-          return x[i - 1].section_id;
+          return x[i - 1].id;
         } else if (
           element.getFullYear() == currentDate.getFullYear() &&
           element.getMonth() > currentDate.getMonth()
@@ -43,43 +43,43 @@ export class SectionService {
           this.logger.debug(
             'Considered section begins too late. Returning last section.',
           );
-          return x[i - 1].section_id;
+          return x[i - 1].id;
         } else if (element.getFullYear() > currentDate.getFullYear()) {
           this.logger.debug(
             'Considered section begins too late. Returning last section.',
           );
-          return x[i - 1].section_id;
+          return x[i - 1].id;
         }
       }
       this.logger.debug('Selecting last set value');
-      return x[x.length - 1].section_id;
+      return x[x.length - 1].id;
     }
     this.logger.debug('Defaulting section to 1');
     return 1;
   }
 
-  async setDate(id: number, body: SetSectionDto) {
-    this.logger.debug(
+  async setDate(section: number, body: SetSectionDto) {
+    /*this.logger.debug(
       'Setting start date for section ' + id + ' to ' + body.date,
     );
     const existingGuess = await this.sectionRepository.findOne({
-      where: { section_id: id },
+      where: { id: id },
     });
     if (existingGuess == undefined) {
       const section = new Section();
-      section.section_id = id;
+      section.id = id;
       section.starting_date = body.date;
       this.sectionRepository.save(section);
     } else {
       this.sectionRepository.update(
         {
-          section_id: id,
+          id: id,
         },
         {
           starting_date: body.date,
         },
       );
-    }
+    }*/
   }
 
   async getSections() {

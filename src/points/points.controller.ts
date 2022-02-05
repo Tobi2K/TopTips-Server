@@ -1,17 +1,19 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Request } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { PointsService } from './points.service';
 
 @Controller('points')
+@ApiBearerAuth('access-token')
 export class PointsController {
   constructor(private readonly pointsService: PointsService) {}
 
-  @Get('day/:id')
-  getGameday(@Param('id') id: number) {
-    return this.pointsService.getGamedayPoints(id);
+  @Get('all/format/:groupID')
+  getPointsFormatted(@Param('groupID') groupID: number, @Request() req) {
+    return this.pointsService.getPointsFormatted(groupID, req.user);
   }
 
-  @Get('all')
-  getAllPoints() {
-    return this.pointsService.getAllPoints();
+  @Get('calculate/:game_id')
+  calculate(@Param('game_id') game_id: number) {
+    return this.pointsService.calculateGamePoints(game_id);
   }
 }

@@ -4,22 +4,26 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
+  ManyToMany,
+  JoinTable,
+  OneToOne,
 } from 'typeorm';
 import { Game } from './game.entity';
+import { Group } from './group.entity';
 import { User } from './user.entity';
 
 @Entity()
 export class Guess {
   @PrimaryGeneratedColumn()
-  guess_id: number;
+  id: number;
 
   @ManyToOne(() => Game, { eager: true })
-  @JoinColumn({ name: 'game_id' })
-  game_id: number;
+  @JoinColumn()
+  game: Game;
 
-  @ManyToOne(() => User, { eager: true })
-  @JoinColumn({ name: 'user_id' })
-  user_id: number;
+  @ManyToOne(() => User)
+  @JoinColumn()
+  user: User;
 
   @Column({ type: 'int' })
   score_team1: number;
@@ -29,4 +33,8 @@ export class Guess {
 
   @Column({ type: 'int' })
   special_bet: number;
+
+  @ManyToOne(() => Group, { eager: true })
+  @JoinColumn()
+  group: Group;
 }

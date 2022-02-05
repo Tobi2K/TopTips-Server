@@ -3,7 +3,7 @@ import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 @Entity()
 export class Section {
   @PrimaryGeneratedColumn()
-  section_id: number;
+  id: number;
 
   @Column({ type: 'timestamp' })
   starting_date: Date;

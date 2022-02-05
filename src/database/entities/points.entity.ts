@@ -6,6 +6,8 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Game } from './game.entity';
+import { Group } from './group.entity';
+import { User } from './user.entity';
 
 @Entity()
 export class Points {
@@ -13,15 +15,17 @@ export class Points {
   id: number;
 
   @ManyToOne(() => Game, { eager: true })
-  @JoinColumn({ name: 'game_id' })
-  game_id: number;
+  @JoinColumn()
+  game: Game;
 
   @Column({ type: 'int' })
-  points_player1: number;
+  points: number;
 
-  @Column({ type: 'int' })
-  points_player2: number;
+  @ManyToOne(() => User, { eager: true })
+  @JoinColumn()
+  user: User;
 
-  @Column({ type: 'int' })
-  points_player3: number;
+  @ManyToOne(() => Group, { eager: true })
+  @JoinColumn()
+  group: Group;
 }
