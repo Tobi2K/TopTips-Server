@@ -31,4 +31,7 @@ export class Season {
   @ManyToOne(() => Competition, { eager: true })
   @JoinColumn()
   competition: Competition;
+
+  @Column({ type: 'tinyint', default: 0 })
+  important: number;
 }

@@ -6,6 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { InjectRepository } from '@nestjs/typeorm';
 
 import * as admin from 'firebase-admin';
 import { Competition } from 'src/database/entities/competition.entity';
@@ -16,12 +17,14 @@ import { Team } from 'src/database/entities/team.entity';
 import { CreateGameDto } from 'src/dtos/create-game.dto';
 import { UpdateGameDto } from 'src/dtos/update-game.dto';
 import { GameService } from 'src/game/game.service';
-import { Connection, Like } from 'typeorm';
+import { Connection, Like, Repository } from 'typeorm';
 
 @Injectable()
 export class CronService {
   private readonly logger = new Logger(CronService.name);
   constructor(
+    @InjectRepository(Game)
+    private gameRepository: Repository<Game>,
     private connection: Connection,
     @Inject(forwardRef(() => GameService))
     private readonly gameService: GameService,
@@ -95,334 +98,121 @@ export class CronService {
       });
   }
 
-  @Cron('0 0 1 * * 1')
-  async syncGames() {
-    const gameRepository = this.connection.getRepository(Game);
-    this.logger.debug('Syncing games and times...');
+  async getActiveSeasons(importance: number) {
     let activeGroups = await this.connection.getRepository(Group).find();
-
+    var nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() - 8);
     activeGroups = activeGroups.filter((s) => {
-      return s.season.start_date < new Date() && s.season.end_date > new Date();
+      return (
+        s.season.important == importance &&
+        s.season.start_date < new Date() &&
+        s.season.end_date > nextWeek
+      );
     });
 
-    let groupSet = new Set<String>();
-
+    let seasons: string[] = [];
     for (let i = 0; i < activeGroups.length; i++) {
-      groupSet.add(activeGroups[i].season.season_id);
+      const season = activeGroups[i].season.season_id;
+      if (!seasons.includes(season)) {
+        seasons.push(season);
+      }
     }
-
-    let activeSeasons = Array.from(groupSet.values());
-
-    for (let i = 0; i < activeSeasons.length; i++) {
-      const seasonID = activeSeasons[i];
-      const season = await this.connection
-        .getRepository(Season)
-        .findOne({ where: { season_id: seasonID } });
-      const data = (
-        await this.httpService
-          .get(
-            'https://api.sportradar.com/handball/trial/v2/en/seasons/' +
-              seasonID +
-              '/summaries.json?api_key=' +
-              process.env.API_KEY,
-          )
-          .toPromise()
-      ).data;
-
-      const new_games_temp: any[] = (
-        await Promise.all(
-          data.summaries.map(async (e: { sport_event: { id: any } }) => {
-            const db = await gameRepository.findOne({
-              event_id: e.sport_event.id,
-            });
-            if (!db) return e;
-            return false;
-          }),
-        )
-      ).filter(Boolean);
-
-      const new_games: any[] = new_games_temp.filter(
-        (e) => !['postponed'].includes(e.sport_event_status.status),
-      );
-
-      new_games.forEach(async (game) => {
-        const team1 = await this.mapTeamID(
-          game.sport_event['competitors'].filter((e) =>
-            ['home'].includes(e.qualifier),
-          )[0].id,
-        );
-        const team2 = await this.mapTeamID(
-          game.sport_event['competitors'].filter((e) =>
-            ['away'].includes(e.qualifier),
-          )[0].id,
-        );
-
-        const db = await gameRepository.findOne({
-          spieltag: game.sport_event.sport_event_context.round.number ?? -1,
-          stage: game.sport_event.sport_event_context.round.name ?? null,
-          team1: team1,
-          team2: team2,
-          season: season,
-        });
-        if (!db) {
-          const dto = new CreateGameDto();
-          dto.date = game.sport_event.start_time;
-          dto.eventID = game.sport_event.id;
-          dto.team1 = team1;
-          dto.team2 = team2;
-          dto.gameday = game.sport_event.sport_event_context.round.number ?? -1;
-          dto.stage = game.sport_event.sport_event_context.round.name ?? null;
-          dto.season = season;
-
-          this.gameService.addGame(dto);
-        } else {
-          this.logger.debug('Duplicate game with id: ' + db.id);
-
-          // game between these teams and on the same gameday exists => duplicate
-          await gameRepository.update(
-            {
-              spieltag: game.sport_event.sport_event_context.round.number ?? -1,
-              stage: game.sport_event.sport_event_context.round.name ?? null,
-              team1: team1,
-              team2: team2,
-            },
-            {
-              event_id: game.sport_event.id,
-            },
-          );
-        }
-      });
-
-      const games_update = data.summaries.filter(
-        (e) => !['closed'].includes(e.sport_event_status.status),
-      );
-
-      games_update.forEach(async (game) => {
-        const db = await gameRepository.findOne({
-          event_id: game.sport_event.id,
-        });
-        if (!db) {
-          return;
-        }
-        this.gameService.updateGameDate(db.id, game.sport_event.start_time);
-      });
-    }
+    return seasons;
   }
 
-  async syncGamesForNewGroup(season: Season) {
-    const gameRepository = this.connection.getRepository(Game);
-    const db = await gameRepository.findOne({
-      where: { season: season },
-    });
+  async syncGames(data: any[], new_season: Season) {
+    this.logger.debug('Syncing games and times...');
 
-    if (db) {
-      this.logger.debug('Season ' + season.name + ' already synced!');
-      return;
-    } else {
-      this.logger.debug('Adding games for season ' + season.name);
-      const data = (
-        await this.httpService
-          .get(
-            'https://api.sportradar.com/handball/trial/v2/en/seasons/' +
-              season.season_id +
-              '/summaries.json?api_key=' +
-              process.env.API_KEY,
-          )
-          .toPromise()
-      ).data;
+    data = data.filter(
+      (e) => !['postponed'].includes(e.sport_event_status.status),
+    );
 
-      const new_games: any[] = (
-        await Promise.all(
-          data.summaries.map(async (e: { sport_event: { id: any } }) => {
-            const db = await gameRepository.findOne({
-              event_id: e.sport_event.id,
-            });
-            if (!db) return e;
-            return false;
-          }),
-        )
-      ).filter(Boolean);
+    data.forEach(async (game) => {
+      const new_eventID = game.sport_event.id;
+      const new_spieltag =
+        game.sport_event.sport_event_context.round.number ?? -1;
+      const new_date = game.sport_event.start_time;
+      const new_team1 = await this.mapTeamID(
+        game.sport_event['competitors'].filter((e) =>
+          ['home'].includes(e.qualifier),
+        )[0],
+      );
+      const new_team2 = await this.mapTeamID(
+        game.sport_event['competitors'].filter((e) =>
+          ['away'].includes(e.qualifier),
+        )[0],
+      );
 
-      new_games.forEach(async (game) => {
-        const team1 = await this.mapTeamID(
-          game.sport_event['competitors'].filter((e) =>
-            ['home'].includes(e.qualifier),
-          )[0].id,
-        );
-        const team2 = await this.mapTeamID(
-          game.sport_event['competitors'].filter((e) =>
-            ['away'].includes(e.qualifier),
-          )[0].id,
-        );
+      const new_stage = game.sport_event.sport_event_context.round.name ?? null;
 
+      const findByID = await this.gameRepository.findOne({
+        event_id: new_eventID,
+      });
+      const findByData = await this.gameRepository.findOne({
+        spieltag: new_spieltag,
+        stage: new_stage,
+        team1: new_team1,
+        team2: new_team2,
+        season: new_season,
+      });
+
+      const findByBoth = await this.gameRepository.findOne({
+        where: {
+          event_id: new_eventID,
+          spieltag: new_spieltag,
+          stage: new_stage,
+          team1: new_team1,
+          team2: new_team2,
+          season: new_season,
+        },
+        relations: ['special_bet', 'team1', 'team2'],
+      });
+      if (findByBoth) {
+        this.logger.debug('Found game; Updating date');
+        findByBoth.date = new_date;
+
+        // update date to be sure
+        await this.gameRepository.save(findByBoth);
+      } else if (findByID && !findByData) {
+        this.logger.debug('Found game with ID; Updating data');
+        // game with same event id found, wrong data
+        findByID.spieltag = new_spieltag;
+        findByID.stage = new_stage;
+        findByID.team1 = new_team1;
+        findByID.team2 = new_team2;
+        findByID.date = new_date;
+        await this.gameRepository.save(findByID);
+      } else if (!findByID && findByData) {
+        this.logger.debug('Found game data; Updating id');
+        // game with same data found, wrong id
+        findByData.event_id = new_eventID;
+        findByData.date = new_date;
+        await this.gameRepository.save(findByData);
+      } else if (!findByData && !findByID) {
+        // new game => add game
         const dto = new CreateGameDto();
-        dto.date = game.sport_event.start_time;
-        dto.eventID = game.sport_event.id;
-        dto.team1 = team1;
-        dto.team2 = team2;
-        dto.gameday = game.sport_event.sport_event_context.round.number ?? -1;
-        dto.stage = game.sport_event.sport_event_context.round.name ?? null;
-        dto.season = season;
+        dto.date = new_date;
+        dto.eventID = new_eventID;
+        dto.team1 = new_team1;
+        dto.team2 = new_team2;
+        dto.gameday = new_spieltag;
+        dto.stage = new_stage;
+        dto.season = new_season;
 
         this.gameService.addGame(dto);
-      });
-    }
-  }
-
-  async mapTeamID(competitorID: string): Promise<Team> {
-    const team = await this.connection.getRepository(Team).findOne({
-      where: {
-        competitor_id: competitorID,
-      },
+      }
     });
-    return team;
   }
 
-  @Cron('*/30 13-23 * * *')
-  async syncScores() {
-    this.logger.debug('Syncing scores...');
-
-    const gameRepository = this.connection.getRepository(Game);
-    let activeGroups = await this.connection.getRepository(Group).find();
-
-    activeGroups = activeGroups.filter((s) => {
-      return s.season.start_date < new Date() && s.season.end_date > new Date();
-    });
-
-    let groupSet = new Set<String>();
-
-    for (let i = 0; i < activeGroups.length; i++) {
-      groupSet.add(activeGroups[i].season.season_id);
-    }
-
-    let activeSeasons = Array.from(groupSet.values());
-
-    for (let i = 0; i < activeSeasons.length; i++) {
-      const seasonID = activeSeasons[i];
-      const data = (
-        await this.httpService
-          .get(
-            'https://api.sportradar.com/handball/trial/v2/en/seasons/' +
-              seasonID +
-              '/summaries.json?api_key=' +
-              process.env.API_KEY,
-          )
-          .toPromise()
-      ).data;
-      const new_scores: any[] = (
-        await Promise.all(
-          data.summaries.map(async (e: { sport_event: { id: any } }) => {
-            const db = await gameRepository.findOne({
-              event_id: e.sport_event.id,
-              completed: 0,
-            });
-            if (db) return e;
-            return false;
-          }),
-        )
-      )
-        .filter(Boolean)
-        .filter((e: any) => ['closed'].includes(e.sport_event_status.status));
-
-      new_scores.forEach(async (score) => {
-        const game = await gameRepository.findOne({
-          event_id: score.sport_event.id,
-        });
-        if (!game) {
-          return;
-        }
-        const update = new UpdateGameDto();
-        update.bet = this.getSpecialBet(game.special_bet.id, score.statistics);
-        update.team1 = score.sport_event_status.home_score;
-        update.team2 = score.sport_event_status.away_score;
-
-        this.gameService.updateGame(update, game.id);
-      });
-    }
-  }
-
-  @Cron('0 0 * * *')
-  async lastsyncScores() {
-    this.logger.debug('Syncing scores...');
-
-    const gameRepository = this.connection.getRepository(Game);
-    let activeGroups = await this.connection.getRepository(Group).find();
-
-    activeGroups = activeGroups.filter((s) => {
-      return s.season.start_date < new Date() && s.season.end_date > new Date();
-    });
-
-    let groupSet = new Set<String>();
-
-    for (let i = 0; i < activeGroups.length; i++) {
-      groupSet.add(activeGroups[i].season.season_id);
-    }
-
-    let activeSeasons = Array.from(groupSet.values());
-
-    for (let i = 0; i < activeSeasons.length; i++) {
-      const seasonID = activeSeasons[i];
-      const data = (
-        await this.httpService
-          .get(
-            'https://api.sportradar.com/handball/trial/v2/en/seasons/' +
-              seasonID +
-              '/summaries.json?api_key=' +
-              process.env.API_KEY,
-          )
-          .toPromise()
-      ).data;
-      const new_scores: any[] = (
-        await Promise.all(
-          data.summaries.map(async (e: { sport_event: { id: any } }) => {
-            const db = await gameRepository.findOne({
-              event_id: e.sport_event.id,
-              completed: 0,
-            });
-            if (db) return e;
-            return false;
-          }),
-        )
-      )
-        .filter(Boolean)
-        .filter((e: any) => ['closed'].includes(e.sport_event_status.status));
-
-      new_scores.forEach(async (score) => {
-        const game = await gameRepository.findOne({
-          event_id: score.sport_event.id,
-        });
-        if (!game) {
-          return;
-        }
-        const update = new UpdateGameDto();
-        update.bet = this.getSpecialBet(game.special_bet.id, score.statistics);
-        update.team1 = score.sport_event_status.home_score;
-        update.team2 = score.sport_event_status.away_score;
-
-        this.gameService.updateGame(update, game.id);
-      });
-      this.updateAllScores(data);
-    }
-  }
-
-  // apparently game results can be changed after their status is set closed :thonk:
-  async updateAllScores(data: any) {
-    /*const data = require('../../example.json'); /* (
-      await this.httpService
-        .get(
-          'https://api.sportradar.com/handball/trial/v2/en/seasons/sr:season:85804/summaries.json?api_key=' + process.env.API_KEY,
-        )
-        .toPromise()
-    ).data */
-
-    const scores = data.summaries.filter((e) =>
+  async syncPoints(data: any[]) {
+    const scores = data.filter((e) =>
       ['closed'].includes(e.sport_event_status.status),
     );
-    const gameRepository = this.connection.getRepository(Game);
     scores.forEach(async (score) => {
-      const game = await gameRepository.findOne({
+      const game = await this.gameRepository.findOne({
         event_id: score.sport_event.id,
       });
+
       if (!game) {
         return;
       }
@@ -433,6 +223,23 @@ export class CronService {
 
       this.gameService.updateGame(update, game.id);
     });
+  }
+
+  async mapTeamID(competitor: any): Promise<Team> {
+    let team = await this.connection.getRepository(Team).findOne({
+      where: {
+        competitor_id: competitor.id,
+      },
+    });
+
+    if (!team) {
+      team = new Team();
+      team.competitor_id = competitor.id;
+      team.name = competitor.name;
+      this.connection.getRepository(Team).save(team);
+      return team;
+    }
+    return team;
   }
 
   getSpecialBet(id: number, statistics: any): number {
@@ -476,30 +283,133 @@ export class CronService {
     }
   }
 
-  async syncDates() {
-    this.logger.debug('Syncing dates...');
-    const data = (
-      await this.httpService
-        .get(
-          'https://api.sportradar.com/handball/trial/v2/en/seasons/sr:season:85804/summaries.json?api_key=' +
-            process.env.API_KEY,
-        )
-        .toPromise()
-    ).data;
-    const gameRepository = this.connection.getRepository(Game);
+  @Cron('55 15-21 * * *') // At minute 0 past every hour from 16 through 22. => 7 times daily per important season
+  async syncImportantGames() {
+    this.logger.debug('Syncing important games...');
 
-    data.summaries.forEach(async (game) => {
-      const db = await gameRepository.findOne({
-        event_id: game.sport_event.id,
-      });
-      if (!db) {
-        return;
-      }
-      this.gameService.updateGameDate(db.id, game.sport_event.start_time);
-    });
+    const seasons = await this.getActiveSeasons(1);
+    for (let i = 0; i < seasons.length; i++) {
+      const seasonID = seasons[i];
+      const data = (
+        await this.httpService
+          .get(
+            'https://api.sportradar.com/handball/trial/v2/en/seasons/' +
+              seasonID +
+              '/summaries.json?api_key=' +
+              process.env.API_KEY,
+          )
+          .toPromise()
+      ).data.summaries as any[];
+
+      const season = await this.connection
+        .getRepository(Season)
+        .findOne({ where: { season_id: seasonID } });
+
+      this.syncGames(data, season);
+      await new Promise((res) => setTimeout(res, 1000));
+    }
   }
 
-  @Cron('0 3 1 * *')
+  @Cron('0 0,16-22 * * *') // At minute 0 past every hour from 16 through 22. => 7 times daily per important season
+  async syncImportantScores() {
+    this.logger.debug('Syncing important scores...');
+
+    const seasons = await this.getActiveSeasons(1);
+    for (let i = 0; i < seasons.length; i++) {
+      const seasonID = seasons[i];
+      const data = (
+        await this.httpService
+          .get(
+            'https://api.sportradar.com/handball/trial/v2/en/seasons/' +
+              seasonID +
+              '/summaries.json?api_key=' +
+              process.env.API_KEY,
+          )
+          .toPromise()
+      ).data.summaries as any[];
+
+      this.syncPoints(data);
+      await new Promise((res) => setTimeout(res, 1000));
+    }
+  }
+
+  @Cron('55 1 * * 1')
+  async syncUnimportantGames() {
+    this.logger.debug('Syncing unimportant games...');
+
+    const seasons = await this.getActiveSeasons(0);
+    for (let i = 0; i < seasons.length; i++) {
+      const seasonID = seasons[i];
+      const data = (
+        await this.httpService
+          .get(
+            'https://api.sportradar.com/handball/trial/v2/en/seasons/' +
+              seasonID +
+              '/summaries.json?api_key=' +
+              process.env.API_KEY,
+          )
+          .toPromise()
+      ).data.summaries as any[];
+
+      const season = await this.connection
+        .getRepository(Season)
+        .findOne({ where: { season_id: seasonID } });
+
+      this.syncGames(data, season);
+      await new Promise((res) => setTimeout(res, 1000));
+    }
+  }
+
+  @Cron('0 2 * * 1')
+  async syncUnimportantScores() {
+    this.logger.debug('Syncing unimportant scores...');
+
+    const seasons = await this.getActiveSeasons(0);
+
+    for (let i = 0; i < seasons.length; i++) {
+      const seasonID = seasons[i];
+      const data = (
+        await this.httpService
+          .get(
+            'https://api.sportradar.com/handball/trial/v2/en/seasons/' +
+              seasonID +
+              '/summaries.json?api_key=' +
+              process.env.API_KEY,
+          )
+          .toPromise()
+      ).data.summaries as any[];
+      this.syncPoints(data);
+
+      await new Promise((res) => setTimeout(res, 1000));
+    }
+  }
+
+  async syncGamesForNewGroup(season: Season) {
+    const gameRepository = this.connection.getRepository(Game);
+    const db = await gameRepository.findOne({
+      where: { season: season },
+    });
+
+    if (db) {
+      this.logger.debug('Season ' + season.name + ' already synced!');
+      return;
+    } else {
+      this.logger.debug('Adding games for season ' + season.name);
+      const data = (
+        await this.httpService
+          .get(
+            'https://api.sportradar.com/handball/trial/v2/en/seasons/' +
+              season.season_id +
+              '/summaries.json?api_key=' +
+              process.env.API_KEY,
+          )
+          .toPromise()
+      ).data.summaries as any[];
+      this.syncGames(data, season);
+    }
+  }
+
+  @Cron('0 3 1 * *') // At 03:00 on day-of-month 1. => 1 time monthly (not per season)
   async syncLeagues() {
     const data = (
       await this.httpService
@@ -534,7 +444,7 @@ export class CronService {
     });
   }
 
-  @Cron('0 4 1 * *')
+  @Cron('0 4 1 * *') // At 04:00 on day-of-month 1. => 1 time monthly (not per season)
   async syncSeasons() {
     const seasonRepository = this.connection.getRepository(Season);
 
@@ -571,11 +481,10 @@ export class CronService {
         .findOne({ where: { competition_id: e.competition_id } });
 
       seasonRepository.save(season);
-      console.log('ADD: ', season);
     });
   }
 
-  @Cron('0 5 1 * *')
+  @Cron('0 5 1 * *') // At 05:00 on day-of-month 1. => 1 time monthly per season
   async syncTeams() {
     const groups = await this.connection
       .getRepository(Group)
@@ -587,7 +496,6 @@ export class CronService {
 
     for (let i = 0; i < groups.length; i++) {
       groupSet.add(groups[i].season.season_id);
-      console.log(groupSet);
     }
 
     const cleanedGroup = Array.from(groupSet.values());

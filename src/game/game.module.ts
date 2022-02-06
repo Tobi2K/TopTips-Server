@@ -13,10 +13,21 @@ import { GroupMembers } from 'src/database/entities/group-members.entity';
 import { UsersService } from 'src/users/users.service';
 import { CronService } from 'src/cron/cron.service';
 import { User } from 'src/database/entities/user.entity';
+import { SpecialBet } from 'src/database/entities/special-bet.entity';
+import { Team } from 'src/database/entities/team.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Game, Points, Guess, Group, GroupMembers, User]),
+    TypeOrmModule.forFeature([
+      Game,
+      Points,
+      Guess,
+      Group,
+      GroupMembers,
+      User,
+      SpecialBet,
+      Team,
+    ]),
     HttpModule,
   ],
   providers: [

@@ -12,29 +12,24 @@ export class CronController {
     private readonly connection: Connection,
   ) {}
 
-  @Get('sync/games')
-  syncGames() {
-    return this.cronService.syncGames();
+  @Get('sync/score/primary')
+  syncImportantScores() {
+    return this.cronService.syncImportantScores();
   }
 
-  @Get('sync/score')
-  syncScores() {
-    return this.cronService.syncScores();
+  @Get('sync/score/secondary')
+  syncUnimportantScores() {
+    return this.cronService.syncUnimportantScores();
   }
 
-  @Get('sync/score/last')
-  lastSyncScores() {
-    return this.cronService.lastsyncScores();
+  @Get('sync/games/primary')
+  syncImportantGames() {
+    return this.cronService.syncImportantGames();
   }
 
-  @Get('sync/dates')
-  syncDate() {
-    return this.cronService.syncDates();
-  }
-
-  @Get('sync/scores')
-  resyncScores() {
-    return this.cronService.updateAllScores(require('../../example.json'));
+  @Get('sync/games/secondary')
+  syncUnimportantGames() {
+    return this.cronService.syncUnimportantGames();
   }
 
   @Get('notify')
