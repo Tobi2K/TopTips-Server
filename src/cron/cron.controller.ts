@@ -12,16 +12,6 @@ export class CronController {
     private readonly connection: Connection,
   ) {}
 
-  @Get('sync/score/primary')
-  syncImportantScores() {
-    return this.cronService.syncImportantScores();
-  }
-
-  @Get('sync/score/secondary')
-  syncUnimportantScores() {
-    return this.cronService.syncUnimportantScores();
-  }
-
   @Get('sync/games/primary')
   syncImportantGames() {
     return this.cronService.syncImportantGames();
@@ -59,5 +49,10 @@ export class CronController {
   @Get('sync/teams')
   syncTeams() {
     return this.cronService.syncTeams();
+  }
+
+  @Get('sync/currentGameday')
+  syncCurrentGameday() {
+    return this.cronService.syncCurrentGameday();
   }
 }

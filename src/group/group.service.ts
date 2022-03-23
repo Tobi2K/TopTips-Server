@@ -32,8 +32,6 @@ export class GroupService {
   ) {}
 
   async getGroups(user: { email: string }) {
-    console.log(user);
-
     const db = await this.usersService.findOne(user.email);
     if (db) {
       let groups = await this.groupMembersRepository.find({
@@ -73,8 +71,6 @@ export class GroupService {
 
         let formattedGroup: any = dbgroup;
         formattedGroup.members = formattedMembers;
-
-        console.log(dbgroup.owner, db);
 
         if (dbgroup.owner.id != db.id) {
           delete formattedGroup.passphrase;

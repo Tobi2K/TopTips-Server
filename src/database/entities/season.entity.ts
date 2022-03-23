@@ -34,4 +34,7 @@ export class Season {
 
   @Column({ type: 'tinyint', default: 0 })
   important: number;
+
+  @Column({type: 'int', default: 1})
+  current_gameday: number;
 }

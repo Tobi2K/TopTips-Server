@@ -19,6 +19,8 @@ import { UpdateGameDto } from 'src/dtos/update-game.dto';
 import { GameService } from 'src/game/game.service';
 import { Connection, Like, Repository } from 'typeorm';
 
+var moment = require('moment');
+
 @Injectable()
 export class CronService {
   private readonly logger = new Logger(CronService.name);
@@ -283,9 +285,9 @@ export class CronService {
     }
   }
 
-  @Cron('55 15-21 * * *') // At minute 0 past every hour from 16 through 22. => 7 times daily per important season
+  //@Cron('0 0,16-22 * * *') // At minute 0 past every hour from 16 through 22. => 7 times daily per important season
   async syncImportantGames() {
-    this.logger.debug('Syncing important games...');
+    this.logger.debug('Syncing important games and scores...');
 
     const seasons = await this.getActiveSeasons(1);
     for (let i = 0; i < seasons.length; i++) {
@@ -306,36 +308,16 @@ export class CronService {
         .findOne({ where: { season_id: seasonID } });
 
       this.syncGames(data, season);
-      await new Promise((res) => setTimeout(res, 1000));
-    }
-  }
-
-  @Cron('0 0,16-22 * * *') // At minute 0 past every hour from 16 through 22. => 7 times daily per important season
-  async syncImportantScores() {
-    this.logger.debug('Syncing important scores...');
-
-    const seasons = await this.getActiveSeasons(1);
-    for (let i = 0; i < seasons.length; i++) {
-      const seasonID = seasons[i];
-      const data = (
-        await this.httpService
-          .get(
-            'https://api.sportradar.com/handball/trial/v2/en/seasons/' +
-              seasonID +
-              '/summaries.json?api_key=' +
-              process.env.API_KEY,
-          )
-          .toPromise()
-      ).data.summaries as any[];
 
       this.syncPoints(data);
+
       await new Promise((res) => setTimeout(res, 1000));
     }
   }
 
-  @Cron('55 1 * * 1')
+  //@Cron('0 2 * * 1')
   async syncUnimportantGames() {
-    this.logger.debug('Syncing unimportant games...');
+    this.logger.debug('Syncing unimportant games and scores...');
 
     const seasons = await this.getActiveSeasons(0);
     for (let i = 0; i < seasons.length; i++) {
@@ -356,28 +338,7 @@ export class CronService {
         .findOne({ where: { season_id: seasonID } });
 
       this.syncGames(data, season);
-      await new Promise((res) => setTimeout(res, 1000));
-    }
-  }
 
-  @Cron('0 2 * * 1')
-  async syncUnimportantScores() {
-    this.logger.debug('Syncing unimportant scores...');
-
-    const seasons = await this.getActiveSeasons(0);
-
-    for (let i = 0; i < seasons.length; i++) {
-      const seasonID = seasons[i];
-      const data = (
-        await this.httpService
-          .get(
-            'https://api.sportradar.com/handball/trial/v2/en/seasons/' +
-              seasonID +
-              '/summaries.json?api_key=' +
-              process.env.API_KEY,
-          )
-          .toPromise()
-      ).data.summaries as any[];
       this.syncPoints(data);
 
       await new Promise((res) => setTimeout(res, 1000));
@@ -537,5 +498,67 @@ export class CronService {
 
       await new Promise((res) => setTimeout(res, 1000));
     }
+  }
+
+  @Cron('0 6 1 * *')
+  async syncCurrentGameday() {
+    const unimportantSeasons = await this.getActiveSeasons(0);
+    const importantSeasons = await this.getActiveSeasons(1);
+    const allActiveSeasons = unimportantSeasons.concat(importantSeasons)
+
+
+    allActiveSeasons.forEach (async (season_id) => {
+      const lastGameday = await this.getLastGameday(season_id)
+      const season = await this.connection.getRepository(Season).findOne(
+        {
+          where: {season_id: season_id}
+        }
+      )
+
+      let currentGameday = 1;
+      
+      for (let i = 1; i <= lastGameday; i++) {
+          const games = await this.connection.getRepository(Game).find({
+            where: {
+              season: season,
+              spieltag: i
+            }
+          })
+          let past_game_count = 0;
+          let pending_game_count = 0;
+          
+          games.forEach((game) => {            
+            if (moment(game.date) < moment().startOf('day')) { // past game
+              past_game_count++
+            } else {
+              pending_game_count++
+            }
+          })
+
+          // if more than 2 games are still to be played, use this gameday as current gameday
+          if (past_game_count > (games.length - 3)) { // past games reached critical point
+            currentGameday = Math.min(i + 1, games.length);
+          } else { // first gameday that has more than 2 pending games
+            currentGameday = i;
+            break;
+          }
+      }
+      
+      this.connection.getRepository(Season).update(season, {
+        current_gameday: currentGameday
+      })
+    })
+  }
+
+  async getLastGameday(season_id: String) {
+    const x = await this.connection
+      .getRepository(Game)
+      .createQueryBuilder('game')
+      .innerJoinAndSelect('game.season', 'season')
+      .select('MAX(spieltag) as max')
+      .where('season.season_id = :sid', { sid: season_id })
+      .getRawOne();
+
+    return x.max
   }
 }

@@ -16,6 +16,8 @@ import { User } from 'src/database/entities/user.entity';
 import { GroupMembers } from 'src/database/entities/group-members.entity';
 import { GroupService } from 'src/group/group.service';
 
+var moment = require('moment');
+
 @Injectable()
 export class GuessService {
   private readonly logger = new Logger(GuessService.name);
@@ -158,6 +160,18 @@ export class GuessService {
         HttpStatus.NOT_FOUND,
       );
     }
+
+    const dbgame = await this.connection.getRepository(Game).findOne({
+      where: { id: game_id }
+    })
+
+    if (!dbgame) {
+      throw new HttpException(
+        'Your game was not found.',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
     const guesses = await this.guessRepository
       .createQueryBuilder('guess')
       .innerJoinAndSelect('guess.user', 'u')
@@ -183,18 +197,30 @@ export class GuessService {
       let guess_string;
       let bet;
 
-      if (val.game.completed == 1) {
+      if (moment(dbgame.date) > moment()) { // game guesses are not locked in yet
         if (val.score_team1 == 0 && val.score_team2 == 0) {
           guess_string = '-';
           bet = '-';
         } else {
-          guess_string = val.score_team1 + ' : ' + val.score_team2;
-          bet = val.special_bet;
+          guess_string = 'hidden';
+          bet = '?';
         }
+        
       } else {
-        guess_string = '-';
-        bet = '-';
+        if (val.game.completed == 1) {
+          if (val.score_team1 == 0 && val.score_team2 == 0) {
+            guess_string = '-';
+            bet = '-';
+          } else {
+            guess_string = val.score_team1 + ' : ' + val.score_team2;
+            bet = val.special_bet;
+          }
+        } else {
+          guess_string = '-';
+          bet = '-';
+        }
       }
+      
 
       let x = {
         name: val.user.name,

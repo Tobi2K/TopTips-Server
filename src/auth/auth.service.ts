@@ -67,13 +67,9 @@ export class AuthService {
 
   async getUserByJWT(token: string) {
     const decoded = await this.jwtService.verify(token);
-    console.log(decoded);
-
     const db = await this.usersService.findOne(decoded.email);
     if (db) {
       return db;
-    } else {
-      console.log(db);
     }
   }
 

@@ -102,6 +102,19 @@ export class PointsService {
       .where('g.id = :gid', { gid: groupID })
       .getMany();
 
+    const maxGameday = await this.connection
+      .getRepository(Game)
+      .createQueryBuilder('game')
+      .innerJoinAndSelect('game.season', 'season')
+      .select('MAX(spieltag) as max')
+      .where('season.season_id = :sid', { sid: groupMembers[0].group.season.season_id })
+      .getRawOne();
+
+    const title_list = ["Player", "Total"]
+    for (let i = 1; i <= maxGameday.max; i++) 
+      title_list.push("Gameday " + i)
+         
+
     const users_list = [];
     for (let i = 0; i < groupMembers.length; i++) {
       users_list.push(
@@ -109,7 +122,8 @@ export class PointsService {
       );
     }
     users_list.sort((a, b) => b[1] - a[1]);
-    return users_list;
+    
+    return [].concat([title_list], users_list);
   }
 
   async assembleList(user: User, group: Group) {
@@ -141,8 +155,6 @@ export class PointsService {
   }
 
   async getGameDayPointsByPlayer(user: User, group: Group) {
-    console.log(group);
-
     const x = await this.connection
       .getRepository(Game)
       .createQueryBuilder('game')

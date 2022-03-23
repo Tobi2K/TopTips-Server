@@ -20,4 +20,9 @@ export class CompetitionController {
   getSingleSeason(@Param('season_id') season_id: string) {
     return this.competitionService.getSingleSeason(season_id);
   }
+
+  @Get('current/:group_id')
+  getCurrentSection(@Param('group_id') group_id: string) {
+    return this.competitionService.getCurrentSection(group_id);
+  }
 }
