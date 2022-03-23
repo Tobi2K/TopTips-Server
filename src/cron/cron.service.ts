@@ -33,7 +33,7 @@ export class CronService {
     private readonly httpService: HttpService,
   ) {}
 
-  @Cron(CronExpression.EVERY_DAY_AT_NOON)
+  //@Cron(CronExpression.EVERY_DAY_AT_NOON)
   async handleNotifications() {
     this.logger.debug('Checking for games today');
 
