@@ -3,6 +3,7 @@ import {
   HttpStatus,
   Injectable,
   HttpService,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -18,9 +19,13 @@ import { Season } from 'src/database/entities/season.entity';
 import { Team } from 'src/database/entities/team.entity';
 import { CronService } from 'src/cron/cron.service';
 import { User } from 'src/database/entities/user.entity';
+import { Points } from 'src/database/entities/points.entity';
+import { Guess } from 'src/database/entities/guess.entity';
+import { ChangeNameDto } from 'src/dtos/change-name.dto';
 
 @Injectable()
 export class GroupService {
+  private readonly logger = new Logger(GroupService.name);
   constructor(
     @InjectRepository(Group) private groupRepository: Repository<Group>,
     @InjectRepository(GroupMembers)
@@ -121,6 +126,146 @@ export class GroupService {
       throw new HttpException(
         'The requested group was not found.',
         HttpStatus.NOT_FOUND,
+      );
+    }
+  }
+
+  async leaveGroup(user: { email: string }, group_id: number) {
+    const db = await this.usersService.findOne(user.email);
+    if (db) {
+      let dbgroup = await this.groupRepository.findOne({
+        where: { id: group_id },
+      });
+
+      await this.userIsPartOfGroup(db.id, dbgroup.id);
+
+      if (dbgroup) {
+        if (dbgroup.owner.id == db.id) {
+          this.logger.debug("Group owner requested leave; denied")
+          return;
+        }
+        this.logger.debug("User with id " + db.id + " is leaving group with id " + dbgroup.id)
+        const toDeletePoints = await this.connection.getRepository(Points).find({
+          where: {
+            user: db,
+            group: dbgroup
+          }
+        })
+        this.logger.debug("Number of deleted points: " + toDeletePoints.length)
+        await this.connection.getRepository(Points).remove(toDeletePoints)
+        
+        const toDeleteGuesses = await this.connection.getRepository(Guess).find({
+          where: {
+            user: db,
+            group: dbgroup
+          }
+        })
+        this.logger.debug("Number of deleted guesses: " + toDeleteGuesses.length)
+        await this.connection.getRepository(Guess).remove(toDeleteGuesses)
+
+        const toDeleteGroupMember = await this.connection.getRepository(GroupMembers).find({
+          where: {
+            user: db,
+            group: dbgroup
+          }
+        })
+        await this.connection.getRepository(GroupMembers).remove(toDeleteGroupMember)
+      } else {
+        throw new HttpException(
+          'The requested group was not found.',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+    } else {
+      throw new HttpException(
+        'You are not allowed to do that!',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+  }
+
+  async deleteGroup(user: { email: string }, group_id: number) {
+    const db = await this.usersService.findOne(user.email);
+    if (db) {
+      let dbgroup = await this.groupRepository.findOne({
+        where: { id: group_id },
+      });
+
+      await this.userIsPartOfGroup(db.id, dbgroup.id);
+
+      if (dbgroup) {
+        if (dbgroup.owner.id != db.id) {
+          this.logger.debug("Non-owner group member requested delete; denied")
+          return;
+        }
+        this.logger.debug("Group with id " + dbgroup.id + " will be deleted")
+        const toDeletePoints = await this.connection.getRepository(Points).find({
+          where: {
+            group: dbgroup
+          }
+        })
+        this.logger.debug("Number of deleted points: " + toDeletePoints.length)
+        await this.connection.getRepository(Points).remove(toDeletePoints)
+        
+        const toDeleteGuesses = await this.connection.getRepository(Guess).find({
+          where: {
+            group: dbgroup
+          }
+        })
+        this.logger.debug("Number of deleted guesses: " + toDeleteGuesses.length)
+        await this.connection.getRepository(Guess).remove(toDeleteGuesses)
+
+        const toDeleteGroupMember = await this.connection.getRepository(GroupMembers).find({
+          where: {
+            group: dbgroup
+          }
+        })
+        await this.connection.getRepository(GroupMembers).remove(toDeleteGroupMember)
+
+        await this.connection.getRepository(Group).remove(dbgroup)
+      } else {
+        throw new HttpException(
+          'The requested group was not found.',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+    } else {
+      throw new HttpException(
+        'You are not allowed to do that!',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+  }
+
+  async renameGroup(user: { email: string }, group_id: number, body: ChangeNameDto) {
+    const db = await this.usersService.findOne(user.email);
+    if (db) {
+      let dbgroup = await this.groupRepository.findOne({
+        where: { id: group_id },
+      });
+
+      await this.userIsPartOfGroup(db.id, dbgroup.id);
+
+      if (dbgroup) {
+        if (dbgroup.owner.id != db.id) {
+          this.logger.debug("Non-owner group member requested rename; denied")
+          return;
+        }
+        this.logger.debug("Group with id " + dbgroup.id + " will be renamed")
+        
+        this.connection.getRepository(Group).update(dbgroup, {
+          name: body.name
+        })
+      } else {
+        throw new HttpException(
+          'The requested group was not found.',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+    } else {
+      throw new HttpException(
+        'You are not allowed to do that!',
+        HttpStatus.UNAUTHORIZED,
       );
     }
   }
