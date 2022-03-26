@@ -13,4 +13,7 @@ export class Competition {
 
   @Column({ default: 'N/A' })
   gender: string;
+
+  @Column({ default: 'International' })
+  country: string;
 }

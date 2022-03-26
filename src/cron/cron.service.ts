@@ -396,10 +396,12 @@ export class CronService {
     ).filter(Boolean);
 
     new_leagues.forEach((e) => {
+      this.logger.debug("Adding league " + e.name)
       const comp = new Competition();
       comp.competition_id = e.id;
       comp.name = e.name;
       comp.gender = e.gender;
+      comp.country = e.category.name
 
       competitionRepository.save(comp);
     });
