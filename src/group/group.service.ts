@@ -23,6 +23,8 @@ import { Points } from 'src/database/entities/points.entity';
 import { Guess } from 'src/database/entities/guess.entity';
 import { ChangeNameDto } from 'src/dtos/change-name.dto';
 
+import { createHash } from 'crypto';
+
 @Injectable()
 export class GroupService {
   private readonly logger = new Logger(GroupService.name);
@@ -141,35 +143,47 @@ export class GroupService {
 
       if (dbgroup) {
         if (dbgroup.owner.id == db.id) {
-          this.logger.debug("Group owner requested leave; denied")
+          this.logger.debug('Group owner requested leave; denied');
           return;
         }
-        this.logger.debug("User with id " + db.id + " is leaving group with id " + dbgroup.id)
-        const toDeletePoints = await this.connection.getRepository(Points).find({
-          where: {
-            user: db,
-            group: dbgroup
-          }
-        })
-        this.logger.debug("Number of deleted points: " + toDeletePoints.length)
-        await this.connection.getRepository(Points).remove(toDeletePoints)
-        
-        const toDeleteGuesses = await this.connection.getRepository(Guess).find({
-          where: {
-            user: db,
-            group: dbgroup
-          }
-        })
-        this.logger.debug("Number of deleted guesses: " + toDeleteGuesses.length)
-        await this.connection.getRepository(Guess).remove(toDeleteGuesses)
+        this.logger.debug(
+          'User with id ' + db.id + ' is leaving group with id ' + dbgroup.id,
+        );
+        const toDeletePoints = await this.connection
+          .getRepository(Points)
+          .find({
+            where: {
+              user: db,
+              group: dbgroup,
+            },
+          });
+        this.logger.debug('Number of deleted points: ' + toDeletePoints.length);
+        await this.connection.getRepository(Points).remove(toDeletePoints);
 
-        const toDeleteGroupMember = await this.connection.getRepository(GroupMembers).find({
-          where: {
-            user: db,
-            group: dbgroup
-          }
-        })
-        await this.connection.getRepository(GroupMembers).remove(toDeleteGroupMember)
+        const toDeleteGuesses = await this.connection
+          .getRepository(Guess)
+          .find({
+            where: {
+              user: db,
+              group: dbgroup,
+            },
+          });
+        this.logger.debug(
+          'Number of deleted guesses: ' + toDeleteGuesses.length,
+        );
+        await this.connection.getRepository(Guess).remove(toDeleteGuesses);
+
+        const toDeleteGroupMember = await this.connection
+          .getRepository(GroupMembers)
+          .find({
+            where: {
+              user: db,
+              group: dbgroup,
+            },
+          });
+        await this.connection
+          .getRepository(GroupMembers)
+          .remove(toDeleteGroupMember);
       } else {
         throw new HttpException(
           'The requested group was not found.',
@@ -195,34 +209,44 @@ export class GroupService {
 
       if (dbgroup) {
         if (dbgroup.owner.id != db.id) {
-          this.logger.debug("Non-owner group member requested delete; denied")
+          this.logger.debug('Non-owner group member requested delete; denied');
           return;
         }
-        this.logger.debug("Group with id " + dbgroup.id + " will be deleted")
-        const toDeletePoints = await this.connection.getRepository(Points).find({
-          where: {
-            group: dbgroup
-          }
-        })
-        this.logger.debug("Number of deleted points: " + toDeletePoints.length)
-        await this.connection.getRepository(Points).remove(toDeletePoints)
-        
-        const toDeleteGuesses = await this.connection.getRepository(Guess).find({
-          where: {
-            group: dbgroup
-          }
-        })
-        this.logger.debug("Number of deleted guesses: " + toDeleteGuesses.length)
-        await this.connection.getRepository(Guess).remove(toDeleteGuesses)
+        this.logger.debug('Group with id ' + dbgroup.id + ' will be deleted');
+        const toDeletePoints = await this.connection
+          .getRepository(Points)
+          .find({
+            where: {
+              group: dbgroup,
+            },
+          });
+        this.logger.debug('Number of deleted points: ' + toDeletePoints.length);
+        await this.connection.getRepository(Points).remove(toDeletePoints);
 
-        const toDeleteGroupMember = await this.connection.getRepository(GroupMembers).find({
-          where: {
-            group: dbgroup
-          }
-        })
-        await this.connection.getRepository(GroupMembers).remove(toDeleteGroupMember)
+        const toDeleteGuesses = await this.connection
+          .getRepository(Guess)
+          .find({
+            where: {
+              group: dbgroup,
+            },
+          });
+        this.logger.debug(
+          'Number of deleted guesses: ' + toDeleteGuesses.length,
+        );
+        await this.connection.getRepository(Guess).remove(toDeleteGuesses);
 
-        await this.connection.getRepository(Group).remove(dbgroup)
+        const toDeleteGroupMember = await this.connection
+          .getRepository(GroupMembers)
+          .find({
+            where: {
+              group: dbgroup,
+            },
+          });
+        await this.connection
+          .getRepository(GroupMembers)
+          .remove(toDeleteGroupMember);
+
+        await this.connection.getRepository(Group).remove(dbgroup);
       } else {
         throw new HttpException(
           'The requested group was not found.',
@@ -237,7 +261,11 @@ export class GroupService {
     }
   }
 
-  async renameGroup(user: { email: string }, group_id: number, body: ChangeNameDto) {
+  async renameGroup(
+    user: { email: string },
+    group_id: number,
+    body: ChangeNameDto,
+  ) {
     const db = await this.usersService.findOne(user.email);
     if (db) {
       let dbgroup = await this.groupRepository.findOne({
@@ -248,14 +276,14 @@ export class GroupService {
 
       if (dbgroup) {
         if (dbgroup.owner.id != db.id) {
-          this.logger.debug("Non-owner group member requested rename; denied")
+          this.logger.debug('Non-owner group member requested rename; denied');
           return;
         }
-        this.logger.debug("Group with id " + dbgroup.id + " will be renamed")
-        
+        this.logger.debug('Group with id ' + dbgroup.id + ' will be renamed');
+
         this.connection.getRepository(Group).update(dbgroup, {
-          name: body.name
-        })
+          name: body.name,
+        });
       } else {
         throw new HttpException(
           'The requested group was not found.',
@@ -336,6 +364,10 @@ export class GroupService {
       const team = new Team();
       team.competitor_id = e.id;
       team.name = e.name;
+      team.abbreviation = this.generateAbbreviation(e);
+      const colors = this.generateColors(e.id);
+      team.background_color = colors.background_color;
+      team.text_color = colors.text_color;
       teamRepository.save(team);
     });
   }
@@ -351,5 +383,62 @@ export class GroupService {
         HttpStatus.FORBIDDEN,
       );
     } else return true;
+  }
+
+  private generateAbbreviation(competitor) {
+    let formattedAbbreviation = '';
+    if (competitor && competitor.abbreviation) {
+      formattedAbbreviation = (competitor.abbreviation as string).slice(0, 3);
+    } else if (competitor && competitor.name) {
+      // generate abbreviation
+      const name = (competitor.name as string).split(' ').filter(Boolean);
+      if (name.length == 1) {
+        formattedAbbreviation = name[0].slice(0, 3);
+      } else if (name.length == 2) {
+        formattedAbbreviation = name[0].slice(0, 2) + name[1].charAt(0);
+      } else if (name.length > 2) {
+        formattedAbbreviation =
+          name[0].charAt(0) + name[1].charAt(0) + name[2].charAt(0);
+      }
+      if (formattedAbbreviation.length != 3) {
+        formattedAbbreviation = 'N/A';
+      }
+    } else {
+      formattedAbbreviation = 'N/A';
+    }
+
+    return formattedAbbreviation;
+  }
+
+  private generateColors(id: string) {
+    // generates hexadecimal hash, slices to 6 digits for color representation
+    const slicedHash = createHash('sha256')
+      .update(id)
+      .digest('hex')
+      .slice(0, 6);
+    const background_color = '#' + slicedHash;
+
+    // convert hex color to rgb color; further: https://stackoverflow.com/questions/1855884/determine-font-color-based-on-background-color and https://www.w3docs.com/snippets/javascript/how-to-convert-rgb-to-hex-and-vice-versa.html
+    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(
+      background_color,
+    );
+    const rgb = result
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : null;
+
+    // calculate if color is visually light or dark
+    const is_light =
+      1 - (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255 < 0.5;
+
+    const text_color = is_light ? '#000000' : '#FFFFFF';
+
+    return {
+      background_color: background_color,
+      text_color: text_color,
+    };
   }
 }

@@ -21,6 +21,7 @@ import { Connection, Like, Repository } from 'typeorm';
 
 var moment = require('moment');
 
+import { createHash } from 'crypto';
 @Injectable()
 export class CronService {
   private readonly logger = new Logger(CronService.name);
@@ -33,30 +34,44 @@ export class CronService {
     private readonly httpService: HttpService,
   ) {}
 
-  //@Cron(CronExpression.EVERY_DAY_AT_NOON)
+  @Cron(CronExpression.EVERY_DAY_AT_NOON)
   async handleNotifications() {
     this.logger.debug('Checking for games today');
 
-    const currentDate = new Date();
-    const currentDateString =
-      currentDate.getFullYear() +
-      '-' +
-      ('0' + (currentDate.getMonth() + 1)).slice(-2) +
-      '-' +
-      ('0' + currentDate.getDate()).slice(-2) +
-      '%';
-    const gamedayResult = await this.connection.getRepository(Game).find({
-      select: ['spieltag'],
-      where: { date: Like(currentDateString) },
-    });
+    const unimportantSeasons = await this.getActiveSeasons(0);
+    const importantSeasons = await this.getActiveSeasons(1);
+    const allActiveSeasons = unimportantSeasons.concat(importantSeasons);
 
+    allActiveSeasons.forEach(async (season_id) => {
+      const dbseason = await this.connection
+        .getRepository(Season)
+        .findOneOrFail({
+          where: { season_id: season_id },
+        });
+      const games = await this.gameRepository.find({
+        where: {
+          season: dbseason,
+        },
+      });
+      const gamedays: number[] = [];
+
+      let gameToday = false;
+      for (const game of games) {
+        if (moment(game.date).isSame(moment(), 'day')) {
+          // there is a game today
+          gameToday = true;
+          if (!gamedays.includes(game.spieltag)) gamedays.push(game.spieltag);
+        }
+      }
+      gamedays.sort((x, y) => x - y);
+
+      if (gameToday && gamedays.length > 0)
+        this.sendNotification(dbseason.season_id, dbseason.name, gamedays);
+    });
+  }
+
+  sendNotification(season_id: string, seasonName: string, gamedays: number[]) {
     let days = '';
-    const gamedays = [];
-    gamedayResult.forEach((e) => {
-      if (!gamedays.includes(e.spieltag)) gamedays.push(e.spieltag);
-    });
-    gamedays.sort((x, y) => x - y);
-
     if (gamedays.length == 0) {
       this.logger.debug('No Games Today');
       return;
@@ -72,11 +87,13 @@ export class CronService {
       days += gamedays[gamedays.length - 1];
     }
 
-    const topic = 'games';
+    const topic = season_id.split(':').join('');
+    console.log(topic);
+
     const message = {
       notification: {
         title: 'Schon getippt?',
-        body: 'Heute finden Spiele statt. ' + days,
+        body: 'Heute finden Spiele statt. ' + seasonName + ' ' + days,
       },
       android: {
         priority: 'high' as any,
@@ -238,6 +255,10 @@ export class CronService {
       team = new Team();
       team.competitor_id = competitor.id;
       team.name = competitor.name;
+      team.abbreviation = this.generateAbbreviation(competitor);
+      const colors = this.generateColors(competitor.id);
+      team.background_color = colors.background_color;
+      team.text_color = colors.text_color;
       this.connection.getRepository(Team).save(team);
       return team;
     }
@@ -396,12 +417,12 @@ export class CronService {
     ).filter(Boolean);
 
     new_leagues.forEach((e) => {
-      this.logger.debug("Adding league " + e.name)
+      this.logger.debug('Adding league ' + e.name);
       const comp = new Competition();
       comp.competition_id = e.id;
       comp.name = e.name;
       comp.gender = e.gender;
-      comp.country = e.category.name
+      comp.country = e.category.name;
 
       competitionRepository.save(comp);
     });
@@ -495,6 +516,10 @@ export class CronService {
         const team = new Team();
         team.competitor_id = e.id;
         team.name = e.name;
+        team.abbreviation = this.generateAbbreviation(e);
+        const colors = this.generateColors(e.id);
+        team.background_color = colors.background_color;
+        team.text_color = colors.text_color;
         teamRepository.save(team);
       });
 
@@ -506,50 +531,50 @@ export class CronService {
   async syncCurrentGameday() {
     const unimportantSeasons = await this.getActiveSeasons(0);
     const importantSeasons = await this.getActiveSeasons(1);
-    const allActiveSeasons = unimportantSeasons.concat(importantSeasons)
+    const allActiveSeasons = unimportantSeasons.concat(importantSeasons);
 
-
-    allActiveSeasons.forEach (async (season_id) => {
-      const lastGameday = await this.getLastGameday(season_id)
-      const season = await this.connection.getRepository(Season).findOne(
-        {
-          where: {season_id: season_id}
-        }
-      )
+    allActiveSeasons.forEach(async (season_id) => {
+      const lastGameday = await this.getLastGameday(season_id);
+      const season = await this.connection.getRepository(Season).findOne({
+        where: { season_id: season_id },
+      });
 
       let currentGameday = 1;
-      
-      for (let i = 1; i <= lastGameday; i++) {
-          const games = await this.connection.getRepository(Game).find({
-            where: {
-              season: season,
-              spieltag: i
-            }
-          })
-          let past_game_count = 0;
-          let pending_game_count = 0;
-          
-          games.forEach((game) => {            
-            if (moment(game.date) < moment().startOf('day')) { // past game
-              past_game_count++
-            } else {
-              pending_game_count++
-            }
-          })
 
-          // if more than 2 games are still to be played, use this gameday as current gameday
-          if (past_game_count > (games.length - 3)) { // past games reached critical point
-            currentGameday = Math.min(i + 1, games.length);
-          } else { // first gameday that has more than 2 pending games
-            currentGameday = i;
-            break;
+      for (let i = 1; i <= lastGameday; i++) {
+        const games = await this.connection.getRepository(Game).find({
+          where: {
+            season: season,
+            spieltag: i,
+          },
+        });
+        let past_game_count = 0;
+        let pending_game_count = 0;
+
+        games.forEach((game) => {
+          if (moment(game.date) < moment().startOf('day')) {
+            // past game
+            past_game_count++;
+          } else {
+            pending_game_count++;
           }
+        });
+
+        // if more than 2 games are still to be played, use this gameday as current gameday
+        if (past_game_count > games.length - 3) {
+          // past games reached critical point
+          currentGameday = Math.min(i + 1, games.length);
+        } else {
+          // first gameday that has more than 2 pending games
+          currentGameday = i;
+          break;
+        }
       }
-      
+
       this.connection.getRepository(Season).update(season, {
-        current_gameday: currentGameday
-      })
-    })
+        current_gameday: currentGameday,
+      });
+    });
   }
 
   async getLastGameday(season_id: String) {
@@ -561,6 +586,65 @@ export class CronService {
       .where('season.season_id = :sid', { sid: season_id })
       .getRawOne();
 
-    return x.max
+    return x.max;
+  }
+
+  generateAbbreviation(competitor) {
+    let formattedAbbreviation = '';
+    if (competitor && competitor.abbreviation) {
+      formattedAbbreviation = (competitor.abbreviation as string).slice(0, 3);
+    } else if (competitor && competitor.name) {
+      // generate abbreviation
+      const name = (competitor.name as string)
+        .split(' ')
+        .filter((value) => value.length > 0);
+      if (name.length == 1) {
+        formattedAbbreviation = name[0].slice(0, 3);
+      } else if (name.length == 2) {
+        formattedAbbreviation = name[0].slice(0, 2) + name[1].charAt(0);
+      } else if (name.length > 2) {
+        formattedAbbreviation =
+          name[0].charAt(0) + name[1].charAt(0) + name[2].charAt(0);
+      }
+      if (formattedAbbreviation.length != 3) {
+        formattedAbbreviation = 'N/A';
+      }
+    } else {
+      formattedAbbreviation = 'N/A';
+    }
+
+    return formattedAbbreviation;
+  }
+
+  generateColors(id: string) {
+    // generates hexadecimal hash, slices to 6 digits for color representation
+    const slicedHash = createHash('sha256')
+      .update(id)
+      .digest('hex')
+      .slice(0, 6);
+    const background_color = '#' + slicedHash;
+
+    // convert hex color to rgb color; further: https://stackoverflow.com/questions/1855884/determine-font-color-based-on-background-color and https://www.w3docs.com/snippets/javascript/how-to-convert-rgb-to-hex-and-vice-versa.html
+    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(
+      background_color,
+    );
+    const rgb = result
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : null;
+
+    // calculate if color is visually light or dark
+    const is_light =
+      1 - (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255 < 0.5;
+
+    const text_color = is_light ? '#000000' : '#FFFFFF';
+
+    return {
+      background_color: background_color,
+      text_color: text_color,
+    };
   }
 }

@@ -54,7 +54,7 @@ export class GameService {
     });
 
     const games = [];
-    for (let i = 1; i < gameDays.length; i++) {
+    for (let i = 0; i < gameDays.length; i++) {
       games.push(await this.getGamedayFormatted(gameDays[i]));
     }
     return games;
@@ -91,7 +91,13 @@ export class GameService {
           minute: 'numeric',
         }),
         team1_id: val.team1.id,
+        team1_abbr: val.team1.abbreviation,
+        team1_background: val.team1.background_color,
+        team1_text: val.team1.text_color,
         team2_id: val.team2.id,
+        team2_abbr: val.team2.abbreviation,
+        team2_background: val.team2.background_color,
+        team2_text: val.team2.text_color,
         team1_name: val.team1.name,
         team2_name: val.team2.name,
         bet_name: val.special_bet.bet_desc,

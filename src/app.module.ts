@@ -14,8 +14,6 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { PointsModule } from './points/points.module';
 import { Points } from './database/entities/points.entity';
 import { ScheduleModule } from '@nestjs/schedule';
-import { SectionModule } from './section/section.module';
-import { Section } from './database/entities/section.entity';
 import { CronModule } from './cron/cron.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
@@ -47,7 +45,6 @@ import { CompetitionModule } from './competition/competition.module';
         SpecialBet,
         Team,
         Points,
-        Section,
         Group,
         GroupMembers,
         Competition,
@@ -60,7 +57,6 @@ import { CompetitionModule } from './competition/competition.module';
     GameModule,
     GuessModule,
     PointsModule,
-    SectionModule,
     CronModule,
     ScheduleModule.forRoot(),
     ConfigModule.forRoot(),
