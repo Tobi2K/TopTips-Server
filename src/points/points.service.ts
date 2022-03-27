@@ -15,6 +15,7 @@ export class PointsService {
     @InjectRepository(Points)
     private pointRepository: Repository<Points>,
 
+    @Inject(forwardRef(() => GroupService))
     private readonly groupService: GroupService,
     private connection: Connection,
   ) {}
@@ -107,13 +108,13 @@ export class PointsService {
       .createQueryBuilder('game')
       .innerJoinAndSelect('game.season', 'season')
       .select('MAX(spieltag) as max')
-      .where('season.season_id = :sid', { sid: groupMembers[0].group.season.season_id })
+      .where('season.season_id = :sid', {
+        sid: groupMembers[0].group.season.season_id,
+      })
       .getRawOne();
 
-    const title_list = ["Player", "Total"]
-    for (let i = 1; i <= maxGameday.max; i++) 
-      title_list.push("Gameday " + i)
-         
+    const title_list = ['Player', 'Total'];
+    for (let i = 1; i <= maxGameday.max; i++) title_list.push('Gameday ' + i);
 
     const users_list = [];
     for (let i = 0; i < groupMembers.length; i++) {
@@ -122,7 +123,7 @@ export class PointsService {
       );
     }
     users_list.sort((a, b) => b[1] - a[1]);
-    
+
     return [].concat([title_list], users_list);
   }
 

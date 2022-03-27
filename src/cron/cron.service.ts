@@ -22,6 +22,8 @@ import { Connection, Like, Repository } from 'typeorm';
 var moment = require('moment');
 
 import { createHash } from 'crypto';
+import { Points } from 'src/database/entities/points.entity';
+import { PointsService } from 'src/points/points.service';
 @Injectable()
 export class CronService {
   private readonly logger = new Logger(CronService.name);
@@ -31,6 +33,8 @@ export class CronService {
     private connection: Connection,
     @Inject(forwardRef(() => GameService))
     private readonly gameService: GameService,
+    @Inject(forwardRef(() => PointsService))
+    private readonly pointsService: PointsService,
     private readonly httpService: HttpService,
   ) {}
 
@@ -77,10 +81,10 @@ export class CronService {
       return;
     } else if (gamedays.length == 1) {
       this.logger.debug('There is a game today');
-      days = 'Spieltag: ' + gamedays[0];
+      days = 'Gameday: ' + gamedays[0];
     } else if (gamedays.length > 1) {
       this.logger.debug('There are games today');
-      days = 'Spieltage: ';
+      days = 'Gamedays: ';
       for (let i = 0; i < gamedays.length - 1; i++) {
         days += gamedays[i] + ', ';
       }
@@ -88,12 +92,11 @@ export class CronService {
     }
 
     const topic = season_id.split(':').join('');
-    console.log(topic);
 
     const message = {
       notification: {
-        title: 'Schon getippt?',
-        body: 'Heute finden Spiele statt. ' + seasonName + ' ' + days,
+        title: 'Have you submitted your guesses?',
+        body: 'There are games today. ' + seasonName + ' ' + days,
       },
       android: {
         priority: 'high' as any,
@@ -235,13 +238,177 @@ export class CronService {
       if (!game) {
         return;
       }
+
+      const wasNotComplete: boolean = game.completed == 0;
+
       const update = new UpdateGameDto();
       update.bet = this.getSpecialBet(game.special_bet.id, score.statistics);
       update.team1 = score.sport_event_status.home_score;
       update.team2 = score.sport_event_status.away_score;
 
-      this.gameService.updateGame(update, game.id);
+      await this.gameService.updateGame(update, game.id);
+
+      if (wasNotComplete) this.checkIfGamedayIsFinished(game);
     });
+  }
+
+  async checkIfGamedayIsFinished(game: Game) {
+    let games = await this.gameRepository.find({
+      where: {
+        season: game.season,
+        spieltag: game.spieltag,
+      },
+    });
+
+    games = games.filter((val) => {
+      val.completed == 0;
+    });
+
+    if (games.length == 0) {
+      const groups = await this.connection.getRepository(Group).find({
+        where: {
+          season: game.season,
+        },
+      });
+      groups.forEach((group) => {
+        this.calculatePointsForGroupByGameday(group, game);
+      });
+    }
+  }
+
+  async calculatePointsForGroupByGameday(group: Group, game: Game) {
+    const games = await this.gameRepository.find({
+      where: {
+        season: game.season,
+        spieltag: game.spieltag,
+      },
+    });
+
+    let points: Points[] = [];
+    for (const current_game of games) {
+      const game_points = await this.connection.getRepository(Points).find({
+        where: {
+          game: current_game,
+          group: group,
+        },
+      });
+
+      points = points.concat(game_points);
+    }
+
+    let transformed = [];
+
+    for (let i = 0; i < points.length; i++) {
+      const element = points[i];
+
+      const total = await this.pointsService.getTotalPointsByPlayer(
+        element.user,
+        group,
+      );
+
+      transformed[i] = {
+        uid: element.user.id,
+        name: element.user.name,
+        points: element.points,
+        total: total,
+      };
+    }
+
+    let final_points = [];
+    transformed.map((e) => {
+      if (!final_points[e.uid]) {
+        final_points[e.uid] = { name: e.name, score: 0, total: e.total };
+      }
+      final_points[e.uid].score += e.points;
+    });
+
+    final_points = Object.entries(final_points)
+      .map((value) => {
+        return value[1];
+      })
+      .sort((a, b) => b.score - a.score);
+
+    const standing = this.generateStandingsString(final_points);
+
+    this.sendGroupNotification('group' + group.id, game, group.name, standing);
+  }
+
+  private generateStandingsString(points: any[]) {
+    let formattedStandings =
+      '1. Place: ' +
+      points[0].name +
+      ' with ' +
+      points[0].score +
+      ' points. (Overall: ' +
+      points[0].total +
+      ')';
+    let place = 1;
+    let skipped = 0;
+    for (let i = 1; i < points.length; i++) {
+      if (points[i - 1].score == points[i].score) {
+        formattedStandings +=
+          '\n' +
+          place +
+          '. Place: ' +
+          points[i].name +
+          ' with ' +
+          points[i].score +
+          ' points. (Overall: ' +
+          points[i].total +
+          ')';
+        skipped += 1;
+      } else {
+        place += 1 + skipped;
+        skipped = 0;
+        formattedStandings +=
+          '\n' +
+          place +
+          '. Place: ' +
+          points[i].name +
+          ' with ' +
+          points[i].score +
+          ' points. (Overall: ' +
+          points[i].total +
+          ')';
+      }
+    }
+
+    return formattedStandings;
+  }
+
+  sendGroupNotification(
+    group_id: string,
+    game: Game,
+    groupName: string,
+    standings: string,
+  ) {
+    const topic = group_id;
+
+    const message = {
+      notification: {
+        title: game.season.name + ' gameday ' + game.spieltag + ' is over.',
+        body: 'How did ' + groupName + ' perform this gameday?\n\n' + standings,
+      },
+      android: {
+        priority: 'high' as any,
+        notification: {
+          priority: 'max' as any,
+          channelId: 'General',
+        },
+      },
+      topic: topic,
+    };
+
+    admin
+      .messaging()
+      .send(message)
+      .then((response) => {
+        // Response is a message ID string.
+        this.logger.debug('Successfully sent message:', response);
+      })
+      .catch((error) => {
+        this.logger.error('Error sending message:', error);
+      });
   }
 
   async mapTeamID(competitor: any): Promise<Team> {
