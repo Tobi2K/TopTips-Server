@@ -473,7 +473,7 @@ export class CronService {
     }
   }
 
-  @Cron('0 1,16-22 * * *') // At minute 0 past every hour from 16 through 22. => 7 times daily per important season
+  @Cron('0 0,16-22 * * *') // At minute 0 past every hour from 16 through 22. => 7 times daily per important season
   async syncImportantGames() {
     this.logger.debug('Syncing important games and scores...');
 
