@@ -253,6 +253,13 @@ export class CronService {
   }
 
   async checkIfGamedayIsFinished(game: Game) {
+    this.logger.debug(
+      'Checking if ' +
+        game.season.name +
+        ' gameday ' +
+        game.spieltag +
+        ' has finshed...',
+    );
     let games = await this.gameRepository.find({
       where: {
         season: game.season,
@@ -335,13 +342,15 @@ export class CronService {
 
   private generateStandingsString(points: any[]) {
     let formattedStandings =
-      '1. Place: ' +
-      points[0].name +
-      ' with ' +
-      points[0].score +
-      ' points. (Overall: ' +
-      points[0].total +
-      ')';
+      points.length > 0
+        ? '1. Place: ' +
+          points[0].name +
+          ' with ' +
+          points[0].score +
+          ' points. (Overall: ' +
+          points[0].total +
+          ')'
+        : 'Nobody played this gameday.';
     let place = 1;
     let skipped = 0;
     for (let i = 1; i < points.length; i++) {
