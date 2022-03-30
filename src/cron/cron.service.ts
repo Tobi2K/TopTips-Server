@@ -704,7 +704,7 @@ export class CronService {
     }
   }
 
-  @Cron('0 6 1 * *')
+  @Cron('0 6 * * *')
   async syncCurrentGameday() {
     const unimportantSeasons = await this.getActiveSeasons(0);
     const importantSeasons = await this.getActiveSeasons(1);
