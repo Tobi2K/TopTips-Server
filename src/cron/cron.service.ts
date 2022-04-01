@@ -392,7 +392,6 @@ export class CronService {
     standings: string,
   ) {
     const topic = group_id;
-    this.logger.debug('TOPIC: ' + topic);
 
     const message = {
       notification: {
