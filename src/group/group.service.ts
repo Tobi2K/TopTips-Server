@@ -46,6 +46,10 @@ export class GroupService {
       });
       groups = groups.map((e) => {
         delete e.user;
+        delete e.group.owner.email;
+        delete e.group.owner.id;
+        delete e.group.owner.password;
+
         return e;
       });
 

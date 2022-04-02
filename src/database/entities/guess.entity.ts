@@ -21,7 +21,7 @@ export class Guess {
   @JoinColumn()
   game: Game;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { eager: true })
   @JoinColumn()
   user: User;
 

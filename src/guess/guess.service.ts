@@ -15,6 +15,7 @@ import { Group } from 'src/database/entities/group.entity';
 import { User } from 'src/database/entities/user.entity';
 import { GroupMembers } from 'src/database/entities/group-members.entity';
 import { GroupService } from 'src/group/group.service';
+import { Points } from 'src/database/entities/points.entity';
 
 var moment = require('moment');
 
@@ -122,7 +123,7 @@ export class GuessService {
     await this.groupService.userIsPartOfGroup(dbuser.id, dbgroup.id);
 
     if (dbgroup && dbuser) {
-      return this.guessRepository
+      const el = await this.guessRepository
         .createQueryBuilder('guess')
         .innerJoinAndSelect('guess.user', 'u')
         .innerJoinAndSelect('guess.game', 'g')
@@ -132,6 +133,23 @@ export class GuessService {
         .andWhere('u.id = :uid', { uid: dbuser.id })
         .andWhere('group.id = :groupID', { groupID: dbgroup.id })
         .getOne();
+      const dbgame = await this.connection.getRepository(Game).findOne({
+        where: {
+          id: game_id,
+        },
+      });
+      const dbpoints = await this.connection.getRepository(Points).findOne({
+        where: {
+          group: dbgroup,
+          user: dbuser,
+          game: dbgame,
+        },
+      });
+      let result = el as any;
+      if (dbpoints) {
+        result.points = dbpoints.points;
+      }
+      return result;
     } else {
       throw new HttpException(
         'Your group was not found.',
@@ -162,14 +180,11 @@ export class GuessService {
     }
 
     const dbgame = await this.connection.getRepository(Game).findOne({
-      where: { id: game_id }
-    })
+      where: { id: game_id },
+    });
 
     if (!dbgame) {
-      throw new HttpException(
-        'Your game was not found.',
-        HttpStatus.NOT_FOUND,
-      );
+      throw new HttpException('Your game was not found.', HttpStatus.NOT_FOUND);
     }
 
     const guesses = await this.guessRepository
@@ -193,11 +208,23 @@ export class GuessService {
 
     const formatted = [];
 
-    guesses.forEach((val) => {
-      let guess_string;
-      let bet;
+    for (let i = 0; i < guesses.length; i++) {
+      const val = guesses[i];
 
-      if (moment(dbgame.date) > moment()) { // game guesses are not locked in yet
+      let guess_string: string;
+      let bet: string | number;
+      let points: string | number;
+
+      const dbpoints = await this.connection.getRepository(Points).findOne({
+        where: {
+          group: dbgroup,
+          user: val.user,
+          game: dbgame,
+        },
+      });
+
+      if (moment(dbgame.date) > moment()) {
+        // game guesses are not locked in yet
         if (val.score_team1 == 0 && val.score_team2 == 0) {
           guess_string = '-';
           bet = '-';
@@ -205,7 +232,6 @@ export class GuessService {
           guess_string = 'hidden';
           bet = '?';
         }
-        
       } else {
         if (val.game.completed == 1) {
           if (val.score_team1 == 0 && val.score_team2 == 0) {
@@ -215,21 +241,26 @@ export class GuessService {
             guess_string = val.score_team1 + ' : ' + val.score_team2;
             bet = val.special_bet;
           }
+          if (dbpoints) {
+            points = dbpoints.points;
+          } else {
+            points = 'N/A';
+          }
         } else {
           guess_string = '-';
           bet = '-';
         }
       }
-      
 
       let x = {
         name: val.user.name,
         guess_string: guess_string,
         bet: bet,
+        points: points,
       };
 
       formatted.push(x);
-    });
+    }
     return formatted;
   }
 }
