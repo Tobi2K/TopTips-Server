@@ -113,7 +113,7 @@ export class CronService {
       .send(message)
       .then((response) => {
         // Response is a message ID string.
-        this.logger.debug('Successfully sent message:', response);
+        this.logger.debug('Successfully sent reminder message:', response);
       })
       .catch((error) => {
         this.logger.error('Error sending message:', error);
@@ -411,9 +411,9 @@ export class CronService {
     admin
       .messaging()
       .send(message)
-      .then((response) => {
+      .then(() => {
         // Response is a message ID string.
-        this.logger.debug('Successfully sent message:', response);
+        this.logger.debug('Successfully sent group message');
       })
       .catch((error) => {
         this.logger.error('Error sending message:', error);
