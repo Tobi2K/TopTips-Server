@@ -268,7 +268,7 @@ export class CronService {
     });
 
     games = games.filter((val) => {
-      val.completed == 0;
+      return val.completed == 0;
     });
 
     if (games.length == 0) {
