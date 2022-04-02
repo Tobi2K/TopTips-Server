@@ -38,7 +38,7 @@ export class CronService {
     private readonly httpService: HttpService,
   ) {}
 
-  @Cron(CronExpression.EVERY_DAY_AT_NOON)
+  @Cron(CronExpression.EVERY_DAY_AT_NOON, { name: 'notifications' })
   async handleNotifications() {
     this.logger.debug('Checking for games today');
 
@@ -482,7 +482,7 @@ export class CronService {
     }
   }
 
-  @Cron('0 0,16-22 * * *') // At minute 0 past every hour from 16 through 22. => 7 times daily per important season
+  @Cron('0 0,16-22 * * *', { name: 'sync-important-games' }) // At minute 0 past every hour from 16 through 22. => 7 times daily per important season
   async syncImportantGames() {
     this.logger.debug('Syncing important games and scores...');
 
@@ -512,7 +512,7 @@ export class CronService {
     }
   }
 
-  @Cron('0 2 * * 1')
+  @Cron('0 2 * * 1', { name: 'sync-unimportant-games' })
   async syncUnimportantGames() {
     this.logger.debug('Syncing unimportant games and scores...');
 
@@ -567,7 +567,7 @@ export class CronService {
     }
   }
 
-  @Cron('0 3 1 * *') // At 03:00 on day-of-month 1. => 1 time monthly (not per season)
+  @Cron('0 3 1 * *', { name: 'sync-leagues' }) // At 03:00 on day-of-month 1. => 1 time monthly (not per season)
   async syncLeagues() {
     const data = (
       await this.httpService
@@ -604,7 +604,7 @@ export class CronService {
     });
   }
 
-  @Cron('0 4 1 * *') // At 04:00 on day-of-month 1. => 1 time monthly (not per season)
+  @Cron('0 4 1 * *', { name: 'sync-seasons' }) // At 04:00 on day-of-month 1. => 1 time monthly (not per season)
   async syncSeasons() {
     const seasonRepository = this.connection.getRepository(Season);
 
@@ -644,7 +644,7 @@ export class CronService {
     });
   }
 
-  @Cron('0 5 1 * *') // At 05:00 on day-of-month 1. => 1 time monthly per season
+  @Cron('0 5 1 * *', { name: 'sync-teams' }) // At 05:00 on day-of-month 1. => 1 time monthly per season
   async syncTeams() {
     const groups = await this.connection
       .getRepository(Group)
@@ -703,7 +703,7 @@ export class CronService {
     }
   }
 
-  @Cron('0 6 * * *')
+  @Cron('0 6 * * *', { name: 'sync-current-gameday' })
   async syncCurrentGameday() {
     const unimportantSeasons = await this.getActiveSeasons(0);
     const importantSeasons = await this.getActiveSeasons(1);
