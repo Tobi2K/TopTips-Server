@@ -4,11 +4,11 @@ import * as admin from 'firebase-admin';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
-  var serviceAccount = require('../tippspiel-19914-firebase-adminsdk-dgecm-432900a038.json');
+  var serviceAccount = require('../top-tips-online-firebase-adminsdk-p5hb4-db7c1e9d40.json');
 
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    projectId: 'tippspiel-19914',
+    projectId: 'top-tips-online',
   });
 
   const app = await NestFactory.create(AppModule);
