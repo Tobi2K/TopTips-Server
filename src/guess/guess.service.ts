@@ -30,12 +30,12 @@ export class GuessService {
     private connection: Connection,
   ) {}
 
-  async addGuess(body: CreateGuessDto, user: { email: any }) {
+  async addGuess(body: CreateGuessDto, user: { username: any }) {
     const dbgroup = await this.connection.getRepository(Group).findOne({
       where: { id: body.groupID },
     });
     const dbuser = await this.connection.getRepository(User).findOne({
-      where: { email: user.email },
+      where: { name: user.username },
     });
 
     await this.groupService.userIsPartOfGroup(dbuser.id, dbgroup.id);
@@ -113,12 +113,12 @@ export class GuessService {
     }
   }
 
-  async getGuess(game_id: number, group_id: number, user: { email: any }) {
+  async getGuess(game_id: number, group_id: number, user: { username: any }) {
     const dbgroup = await this.connection.getRepository(Group).findOne({
       where: { id: group_id },
     });
     const dbuser = await this.connection.getRepository(User).findOne({
-      where: { email: user.email },
+      where: { name: user.username },
     });
     await this.groupService.userIsPartOfGroup(dbuser.id, dbgroup.id);
 
@@ -161,13 +161,13 @@ export class GuessService {
   async getAllGroupGuessesForGame(
     game_id: number,
     group_id: number,
-    user: { email: any },
+    user: { username: any },
   ) {
     const dbgroup = await this.connection.getRepository(Group).findOne({
       where: { id: group_id },
     });
     const dbuser = await this.connection.getRepository(User).findOne({
-      where: { email: user.email },
+      where: { name: user.username },
     });
 
     await this.groupService.userIsPartOfGroup(dbuser.id, dbgroup.id);

@@ -18,7 +18,7 @@ export class Game {
   event_id: string;
 
   @Column({ type: 'int' })
-  spieltag: number;
+  gameday: number;
 
   @Column({ type: 'varchar', nullable: true })
   stage: string;

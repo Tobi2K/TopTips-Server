@@ -12,6 +12,7 @@ import { AppService } from './app.service';
 import { AuthService } from './auth/auth.service';
 import { ChangeNameDto } from './dtos/change-name.dto';
 import { LoginDto } from './dtos/login.dto';
+import { RegisterDto } from './dtos/register.dto';
 
 export const IS_PUBLIC_KEY = 'isPublic';
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
@@ -32,8 +33,8 @@ export class AppController {
 
   @Public()
   @Post('auth/register')
-  async register(@Request() req) {
-    return await this.authService.register(req.body);
+  async register(@Body() body: RegisterDto) {
+    return await this.authService.register(body);
   }
 
   @Get('profile')

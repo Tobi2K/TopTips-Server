@@ -19,11 +19,11 @@ export class CompetitionService {
     private connection: Connection,
   ) {}
   async getCompetitionsForCountry(country: string) {
-    return (await this.competitionRepository.find({
-      where: {country: country},
-    })).sort((a,b) => 
-      a.gender.localeCompare(b.gender)
-    );
+    return (
+      await this.competitionRepository.find({
+        where: { country: country },
+      })
+    ).sort((a, b) => a.gender.localeCompare(b.gender));
   }
 
   async getSeasonsForCompetition(competition_id: string) {
@@ -44,27 +44,34 @@ export class CompetitionService {
     }
   }
 
-  async getSeasonsByUser(user: { email: any }) {
+  async getSeasonsByUser(user: { username: any }) {
     const dbuser = await this.connection
       .getRepository(User)
-      .findOne({ where: { email: user.email } });    
-      
+      .findOne({ where: { name: user.username } });
+
     if (dbuser) {
-      const dbgroupmemberships = await this.connection.getRepository(GroupMembers).find({
-        user: dbuser
-      })
-      
-      const groupArray: Season[] = []
-      const groupIDArray: string[] = []
+      const dbgroupmemberships = await this.connection
+        .getRepository(GroupMembers)
+        .find({
+          user: dbuser,
+        });
+
+      const groupArray: Season[] = [];
+      const groupIDArray: string[] = [];
 
       const unimportantSeasons = await this.getActiveSeasons(0);
       const importantSeasons = await this.getActiveSeasons(1);
-      const allActiveSeasons = unimportantSeasons.concat(importantSeasons)
-      for(const group of dbgroupmemberships) {
-        const dbgroup = await this.connection.getRepository(Group).findOne(group.group);
+      const allActiveSeasons = unimportantSeasons.concat(importantSeasons);
+      for (const group of dbgroupmemberships) {
+        const dbgroup = await this.connection
+          .getRepository(Group)
+          .findOne(group.group);
 
         if (dbgroup) {
-          if (allActiveSeasons.includes(dbgroup.season.season_id) && !groupIDArray.includes(dbgroup.season.season_id)) {
+          if (
+            allActiveSeasons.includes(dbgroup.season.season_id) &&
+            !groupIDArray.includes(dbgroup.season.season_id)
+          ) {
             groupArray.push(dbgroup.season);
             groupIDArray.push(dbgroup.season.season_id);
           }
@@ -74,8 +81,8 @@ export class CompetitionService {
             HttpStatus.NOT_FOUND,
           );
         }
-      }     
-      return groupArray 
+      }
+      return groupArray;
     }
   }
 
@@ -117,8 +124,8 @@ export class CompetitionService {
 
   async getCurrentSection(group_id: string) {
     const dbgroup = await this.connection.getRepository(Group).findOne({
-      where: { id: group_id }
-    })
+      where: { id: group_id },
+    });
     if (dbgroup) {
       return dbgroup.season.current_gameday;
     } else {
@@ -130,6 +137,11 @@ export class CompetitionService {
   }
 
   async getCountries() {
-    return await this.connection.getRepository(Competition).createQueryBuilder("comp").select(["country"]).groupBy("comp.country").getRawMany()
+    return await this.connection
+      .getRepository(Competition)
+      .createQueryBuilder('comp')
+      .select(['country'])
+      .groupBy('comp.country')
+      .getRawMany();
   }
 }

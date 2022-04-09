@@ -38,15 +38,14 @@ export class GroupService {
     private readonly httpService: HttpService,
   ) {}
 
-  async getGroups(user: { email: string }) {
-    const db = await this.usersService.findOne(user.email);
+  async getGroups(user: { username: string }) {
+    const db = await this.usersService.findOne(user.username);
     if (db) {
       let groups = await this.groupMembersRepository.find({
         where: { user: db },
       });
       groups = groups.map((e) => {
         delete e.user;
-        delete e.group.owner.email;
         delete e.group.owner.id;
         delete e.group.owner.password;
 
@@ -62,8 +61,8 @@ export class GroupService {
     }
   }
 
-  async getSingleGroup(user: { email: string }, group_id: number) {
-    const db = await this.usersService.findOne(user.email);
+  async getSingleGroup(user: { username: string }, group_id: number) {
+    const db = await this.usersService.findOne(user.username);
     if (db) {
       let dbgroup = await this.groupRepository.findOne({
         where: { id: group_id },
@@ -88,7 +87,6 @@ export class GroupService {
         }
 
         delete formattedGroup.owner.id;
-        delete formattedGroup.owner.email;
         delete formattedGroup.owner.password;
 
         return formattedGroup;
@@ -106,11 +104,11 @@ export class GroupService {
     }
   }
 
-  async joinGroup(user: { email: string }, body: JoinGroupDto) {
+  async joinGroup(user: { username: string }, body: JoinGroupDto) {
     const group = await this.groupRepository.findOne({
       where: { passphrase: body.passphrase },
     });
-    const dbuser = await this.usersService.findOne(user.email);
+    const dbuser = await this.usersService.findOne(user.username);
     if (group && dbuser) {
       const groupMember = await this.groupMembersRepository.findOne({
         where: { group: group, user: dbuser },
@@ -136,8 +134,8 @@ export class GroupService {
     }
   }
 
-  async leaveGroup(user: { email: string }, group_id: number) {
-    const db = await this.usersService.findOne(user.email);
+  async leaveGroup(user: { username: string }, group_id: number) {
+    const db = await this.usersService.findOne(user.username);
     if (db) {
       let dbgroup = await this.groupRepository.findOne({
         where: { id: group_id },
@@ -202,8 +200,8 @@ export class GroupService {
     }
   }
 
-  async deleteGroup(user: { email: string }, group_id: number) {
-    const db = await this.usersService.findOne(user.email);
+  async deleteGroup(user: { username: string }, group_id: number) {
+    const db = await this.usersService.findOne(user.username);
     if (db) {
       let dbgroup = await this.groupRepository.findOne({
         where: { id: group_id },
@@ -266,11 +264,11 @@ export class GroupService {
   }
 
   async renameGroup(
-    user: { email: string },
+    user: { username: string },
     group_id: number,
     body: ChangeNameDto,
   ) {
-    const db = await this.usersService.findOne(user.email);
+    const db = await this.usersService.findOne(user.username);
     if (db) {
       let dbgroup = await this.groupRepository.findOne({
         where: { id: group_id },
@@ -302,7 +300,7 @@ export class GroupService {
     }
   }
 
-  async createGroup(user: { email: string }, body: CreateGroupDto) {
+  async createGroup(user: { username: string }, body: CreateGroupDto) {
     let created = false;
     let token = '';
     while (!created) {
@@ -325,7 +323,7 @@ export class GroupService {
     group.season = season;
     group.name = body.groupName;
     group.passphrase = token;
-    group.owner = await this.usersService.findOne(user.email);
+    group.owner = await this.usersService.findOne(user.username);
     const dbgroup = await this.groupRepository.save(group);
 
     const groupMember = new GroupMembers();

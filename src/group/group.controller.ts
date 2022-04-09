@@ -42,16 +42,20 @@ export class GroupController {
 
   @Get('/leave/:group_id')
   leaveGroup(@Request() req, @Param('group_id') group_id: number) {
-    return this.groupService.leaveGroup(req.user, group_id)
+    return this.groupService.leaveGroup(req.user, group_id);
   }
 
   @Get('/delete/:group_id')
   deleteGroup(@Request() req, @Param('group_id') group_id: number) {
-    return this.groupService.deleteGroup(req.user, group_id)
+    return this.groupService.deleteGroup(req.user, group_id);
   }
 
   @Post('/rename/:group_id')
-  renameGroup(@Request() req, @Param('group_id') group_id: number, @Body() body: ChangeNameDto) {
-    return this.groupService.renameGroup(req.user, group_id, body)
+  renameGroup(
+    @Request() req,
+    @Param('group_id') group_id: number,
+    @Body() body: ChangeNameDto,
+  ) {
+    return this.groupService.renameGroup(req.user, group_id, body);
   }
 }

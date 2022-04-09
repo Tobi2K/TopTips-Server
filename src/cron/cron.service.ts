@@ -64,7 +64,7 @@ export class CronService {
         if (moment(game.date).isSame(moment(), 'day')) {
           // there is a game today
           gameToday = true;
-          if (!gamedays.includes(game.spieltag)) gamedays.push(game.spieltag);
+          if (!gamedays.includes(game.gameday)) gamedays.push(game.gameday);
         }
       }
       gamedays.sort((x, y) => x - y);
@@ -151,7 +151,7 @@ export class CronService {
 
     data.forEach(async (game) => {
       const new_eventID = game.sport_event.id;
-      const new_spieltag =
+      const new_gameday =
         game.sport_event.sport_event_context.round.number ?? -1;
       const new_date = game.sport_event.start_time;
       const new_team1 = await this.mapTeamID(
@@ -171,7 +171,7 @@ export class CronService {
         event_id: new_eventID,
       });
       const findByData = await this.gameRepository.findOne({
-        spieltag: new_spieltag,
+        gameday: new_gameday,
         stage: new_stage,
         team1: new_team1,
         team2: new_team2,
@@ -181,7 +181,7 @@ export class CronService {
       const findByBoth = await this.gameRepository.findOne({
         where: {
           event_id: new_eventID,
-          spieltag: new_spieltag,
+          gameday: new_gameday,
           stage: new_stage,
           team1: new_team1,
           team2: new_team2,
@@ -198,7 +198,7 @@ export class CronService {
       } else if (findByID && !findByData) {
         this.logger.debug('Found game with ID; Updating data');
         // game with same event id found, wrong data
-        findByID.spieltag = new_spieltag;
+        findByID.gameday = new_gameday;
         findByID.stage = new_stage;
         findByID.team1 = new_team1;
         findByID.team2 = new_team2;
@@ -217,7 +217,7 @@ export class CronService {
         dto.eventID = new_eventID;
         dto.team1 = new_team1;
         dto.team2 = new_team2;
-        dto.gameday = new_spieltag;
+        dto.gameday = new_gameday;
         dto.stage = new_stage;
         dto.season = new_season;
 
@@ -257,13 +257,13 @@ export class CronService {
       'Checking if ' +
         game.season.name +
         ' gameday ' +
-        game.spieltag +
+        game.gameday +
         ' has finshed...',
     );
     let games = await this.gameRepository.find({
       where: {
         season: game.season,
-        spieltag: game.spieltag,
+        gameday: game.gameday,
       },
     });
 
@@ -287,7 +287,7 @@ export class CronService {
     const games = await this.gameRepository.find({
       where: {
         season: game.season,
-        spieltag: game.spieltag,
+        gameday: game.gameday,
       },
     });
 
@@ -395,7 +395,7 @@ export class CronService {
 
     const message = {
       notification: {
-        title: game.season.name + ' gameday ' + game.spieltag + ' is over.',
+        title: game.season.name + ' gameday ' + game.gameday + ' is over.',
         body: 'How did ' + groupName + ' perform this gameday?\n\n' + standings,
       },
       android: {
@@ -721,7 +721,7 @@ export class CronService {
         const games = await this.connection.getRepository(Game).find({
           where: {
             season: season,
-            spieltag: i,
+            gameday: i,
           },
         });
         let past_game_count = 0;
@@ -758,7 +758,7 @@ export class CronService {
       .getRepository(Game)
       .createQueryBuilder('game')
       .innerJoinAndSelect('game.season', 'season')
-      .select('MAX(spieltag) as max')
+      .select('MAX(gameday) as max')
       .where('season.season_id = :sid', { sid: season_id })
       .getRawOne();
 

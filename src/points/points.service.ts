@@ -89,9 +89,9 @@ export class PointsService {
     return points;
   }
 
-  async getPointsFormatted(groupID, user) {
+  async getPointsFormatted(groupID: number, user: { username: any }) {
     const dbuser = await this.connection.getRepository(User).findOne({
-      where: { email: user.email },
+      where: { name: user.username },
     });
     await this.groupService.userIsPartOfGroup(dbuser.id, groupID);
     const groupMembers = await this.connection
@@ -107,7 +107,7 @@ export class PointsService {
       .getRepository(Game)
       .createQueryBuilder('game')
       .innerJoinAndSelect('game.season', 'season')
-      .select('MAX(spieltag) as max')
+      .select('MAX(gameday) as max')
       .where('season.season_id = :sid', {
         sid: groupMembers[0].group.season.season_id,
       })
@@ -160,7 +160,7 @@ export class PointsService {
       .getRepository(Game)
       .createQueryBuilder('game')
       .innerJoinAndSelect('game.season', 'season')
-      .select('MAX(spieltag) as max')
+      .select('MAX(gameday) as max')
       .where('season.season_id = :sid', { sid: group.season.season_id })
       .getRawOne();
 
@@ -171,7 +171,7 @@ export class PointsService {
         .innerJoinAndSelect('points.game', 'g')
         .where('points.user.id = :uid ', { uid: user.id })
         .andWhere('points.group.id = :gid', { gid: group.id })
-        .andWhere('g.spieltag = :index', { index: i })
+        .andWhere('g.gameday = :index', { index: i })
         .getMany();
       let sum = 0;
       gameday.forEach((point) => {

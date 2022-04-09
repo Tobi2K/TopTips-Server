@@ -21,14 +21,14 @@ export class GameService {
     private readonly groupService: GroupService,
   ) {}
 
-  async getAllGamesFormatted(group_id: number, user: { email: any }) {
+  async getAllGamesFormatted(group_id: number, user: { username: any }) {
     const dbgroup = await this.connection
       .getRepository(Group)
       .findOne({ where: { id: group_id } });
 
     const dbuser = await this.connection
       .getRepository(User)
-      .findOne({ where: { email: user.email } });
+      .findOne({ where: { name: user.username } });
 
     await this.groupService.userIsPartOfGroup(dbuser.id, dbgroup.id);
 
@@ -38,19 +38,19 @@ export class GameService {
       .getRepository(Game)
       .createQueryBuilder('game')
       .innerJoinAndSelect('game.season', 's')
-      .select('game.spieltag')
+      .select('game.gameday')
       .addSelect('s')
       .addSelect('game.stage')
       .where('s.season_id = :sid', { sid: dbseason.season_id })
-      .groupBy('spieltag')
+      .groupBy('gameday')
       .getMany();
 
     gameDays.sort((a, b) => {
-      if (a.spieltag == -1) return -1;
+      if (a.gameday == -1) return -1;
 
-      if (b.spieltag == -1) return -1;
+      if (b.gameday == -1) return -1;
 
-      return a.spieltag - b.spieltag;
+      return a.gameday - b.gameday;
     });
 
     const games = [];
@@ -62,11 +62,11 @@ export class GameService {
 
   async getGamedayFormatted(day: Game) {
     const games = await this.gameRepository.find({
-      where: { spieltag: day.spieltag, season: day.season },
+      where: { gameday: day.gameday, season: day.season },
       order: { date: 'ASC' },
     });
 
-    const special = day.spieltag == -1;
+    const special = day.gameday == -1;
 
     const formatted = [];
 
@@ -114,7 +114,7 @@ export class GameService {
 
   async addGame(body: CreateGameDto) {
     const game = new Game();
-    game.spieltag = body.gameday;
+    game.gameday = body.gameday;
     game.stage = body.stage;
     game.event_id = body.eventID;
     game.date = body.date;

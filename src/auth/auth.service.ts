@@ -6,6 +6,8 @@ import * as bcrypt from 'bcrypt';
 import { config } from 'process';
 import { jwtConstants } from './constants';
 import { Connection } from 'typeorm';
+import { RegisterDto } from 'src/dtos/register.dto';
+import { ChangeNameDto } from 'src/dtos/change-name.dto';
 
 @Injectable()
 export class AuthService {
@@ -15,8 +17,8 @@ export class AuthService {
     private connection: Connection,
   ) {}
 
-  async validateUser(email: string, pass: string) {
-    const user = await this.usersService.findOne(email);
+  async validateUser(name: string, pass: string) {
+    const user = await this.usersService.findOne(name);
     if (user) {
       if (bcrypt.compareSync(pass, user.password)) {
         const { password, ...result } = user;
@@ -26,11 +28,18 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const db = await this.validateUser(user.email, user.password);
+    if (!user.name) {
+      throw new HttpException(
+        'It seems your app version is outdated. Please update.',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    const db = await this.validateUser(user.name, user.password);
     if (db) {
-      const payload = { email: db.email, name: db.name };
+      const payload = { name: db.name };
+      const x = this.jwtService.sign(payload);
       return {
-        access_token: this.jwtService.sign(payload),
+        access_token: x,
         name: db.name,
       };
     } else {
@@ -41,24 +50,23 @@ export class AuthService {
     }
   }
 
-  async register(user: any) {
-    const db = await this.usersService.findOne(user.email);
+  async register(user: RegisterDto) {
+    const db = await this.usersService.findOne(user.name);
 
     if (db) {
       throw new HttpException(
-        'A user with that email exists!',
+        'A user with that name exists!',
         HttpStatus.NOT_FOUND,
       );
     } else {
       bcrypt.hash(user.password, 10, (_err, hash) => {
         const x = new User();
-        x.email = user.email;
-        x.name = user.username;
+        x.name = user.name;
         x.password = hash;
         this.usersService.addUser(x);
       });
 
-      const payload = { email: user.email, name: user.name };
+      const payload = { name: user.name };
       return {
         access_token: this.jwtService.sign(payload),
       };
@@ -67,22 +75,28 @@ export class AuthService {
 
   async getUserByJWT(token: string) {
     const decoded = await this.jwtService.verify(token);
-    const db = await this.usersService.findOne(decoded.email);
+    const db = await this.usersService.findOne(decoded.name);
     if (db) {
       return db;
     }
   }
 
-  async updateUserByJWT(body: any, user: { email: string }) {
-    const dbuser = await this.usersService.findOne(user.email);
+  async updateUserByJWT(body: ChangeNameDto, user: { username: string }) {
+    const dbuser = await this.usersService.findOne(user.username);
 
-    this.connection.getRepository(User).update(
-      {
-        id: dbuser.id,
-      },
-      {
+    if (dbuser.name == body.name) return;
+
+    const newUser = await this.usersService.findOne(body.name);
+
+    if (newUser) {
+      throw new HttpException(
+        'A user with that name exists!',
+        HttpStatus.FORBIDDEN,
+      );
+    } else {
+      this.connection.getRepository(User).update(dbuser, {
         name: body.name,
-      },
-    );
+      });
+    }
   }
 }
