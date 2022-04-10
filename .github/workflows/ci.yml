@@ -49,10 +49,11 @@ jobs:
             docker stop top-tips-server
             docker rm top-tips-server
             rm ./.env && touch ./.env
-            echo 'API_KEY=${{ env.API_KEY }}' >> ./.env
-            echo 'FIREBASE_PROJECT_ID=${{ env.FIREBASE_PROJECT_ID }}' >> ./.env
-            echo 'FIREBASE_PRIVATE_KEY=${{ env.FIREBASE_PRIVATE_KEY }}' >> ./.env
-            echo 'FIREBASE_CLIENT_EMAIL=${{ env.FIREBASE_CLIENT_EMAIL }}' >> ./.env
+            echo 'API_KEY=${{ secrets.API_KEY }}' >> ./.env
+            echo 'JWT_SECRET=${{ secrets.JWT_SECRET }}' >> ./.env
+            echo 'FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}' >> ./.env
+            echo 'FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}' >> ./.env
+            echo 'FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}' >> ./.env
             docker run -d --restart unless-stopped --network host --name=top-tips-server --env-file ./.env ghcr.io/tobi2k/top-tips:${{ needs.build.outputs.branch_name }}
           host: ${{ secrets.HOST }}
           user: root

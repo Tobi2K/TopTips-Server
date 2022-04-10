@@ -37,7 +37,9 @@ export class AuthService {
     const db = await this.validateUser(user.name, user.password);
     if (db) {
       const payload = { name: db.name };
-      const x = this.jwtService.sign(payload);
+      const x = this.jwtService.sign(payload, {
+        secret: process.env.JWT_SECRET,
+      });
       return {
         access_token: x,
         name: db.name,
@@ -68,7 +70,9 @@ export class AuthService {
 
       const payload = { name: user.name };
       return {
-        access_token: this.jwtService.sign(payload),
+        access_token: this.jwtService.sign(payload, {
+          secret: process.env.JWT_SECRET,
+        }),
       };
     }
   }
