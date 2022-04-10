@@ -4,10 +4,16 @@ import * as admin from 'firebase-admin';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
-  var serviceAccount = require('../top-tips-online-firebase-adminsdk-p5hb4-db7c1e9d40.json');
+  require('dotenv').config();
+
+  console.log(process.env.API_KEY);
 
   admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    }),
     projectId: 'top-tips-online',
   });
 

@@ -33,6 +33,5 @@ lerna-debug.log*
 !.vscode/launch.json
 !.vscode/extensions.json
 
-# tippspiel-19914-firebase-adminsdk-dgecm-432900a038.json
-example.json
-example2.json
+.env
+top-tips-online-firebase-adminsdk-p5hb4-db7c1e9d40.json
