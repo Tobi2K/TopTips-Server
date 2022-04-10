@@ -9,7 +9,7 @@ import { User } from 'src/database/entities/user.entity';
 import { GroupService } from 'src/group/group.service';
 import { Points } from 'src/database/entities/points.entity';
 
-import moment from 'moment';
+var moment = require('moment');
 
 @Injectable()
 export class GuessService {

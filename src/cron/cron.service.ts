@@ -19,7 +19,7 @@ import { UpdateGameDto } from 'src/dtos/update-game.dto';
 import { GameService } from 'src/game/game.service';
 import { Connection, Repository } from 'typeorm';
 
-import moment from 'moment';
+var moment = require('moment');
 
 import { createHash } from 'crypto';
 import { Points } from 'src/database/entities/points.entity';
