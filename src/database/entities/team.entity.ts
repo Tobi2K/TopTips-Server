@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class Team {
@@ -14,9 +14,9 @@ export class Team {
   @Column()
   abbreviation: string;
 
-  @Column({default: "#FFFFFF"})
+  @Column({ default: '#FFFFFF' })
   background_color: string;
 
-  @Column({default: "#000000"})
+  @Column({ default: '#000000' })
   text_color: string;
 }

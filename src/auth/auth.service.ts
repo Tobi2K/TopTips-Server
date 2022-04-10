@@ -1,10 +1,8 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { JwtModule, JwtService } from '@nestjs/jwt';
+import { JwtService } from '@nestjs/jwt';
 import { User } from 'src/database/entities/user.entity';
 import * as bcrypt from 'bcrypt';
-import { config } from 'process';
-import { jwtConstants } from './constants';
 import { Connection } from 'typeorm';
 import { RegisterDto } from 'src/dtos/register.dto';
 import { ChangeNameDto } from 'src/dtos/change-name.dto';
@@ -24,7 +22,9 @@ export class AuthService {
         const { password, ...result } = user;
         return result;
       } else return null;
-    } else return null;
+    } else {
+      throw new HttpException('User not found.', HttpStatus.NOT_FOUND);
+    }
   }
 
   async login(user: any) {

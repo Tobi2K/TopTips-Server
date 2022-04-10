@@ -167,50 +167,24 @@ export class CronService {
 
       const new_stage = game.sport_event.sport_event_context.round.name ?? null;
 
-      const findByID = await this.gameRepository.findOne({
-        event_id: new_eventID,
-      });
-      const findByData = await this.gameRepository.findOne({
-        gameday: new_gameday,
-        stage: new_stage,
-        team1: new_team1,
-        team2: new_team2,
-        season: new_season,
-      });
-
-      const findByBoth = await this.gameRepository.findOne({
+      const findByData: Game = await this.gameRepository.findOne({
+        relations: ['team1', 'team2', 'special_bet'],
         where: {
-          event_id: new_eventID,
           gameday: new_gameday,
           stage: new_stage,
           team1: new_team1,
           team2: new_team2,
           season: new_season,
         },
-        relations: ['special_bet', 'team1', 'team2'],
       });
-      if (findByBoth) {
-        this.logger.debug('Found game; Updating date');
-        findByBoth.date = new_date;
 
-        // update date to be sure
-        await this.gameRepository.save(findByBoth);
-      } else if (findByID && !findByData) {
-        this.logger.debug('Found game with ID; Updating data');
-        // game with same event id found, wrong data
-        findByID.gameday = new_gameday;
-        findByID.stage = new_stage;
-        findByID.team1 = new_team1;
-        findByID.team2 = new_team2;
-        findByID.date = new_date;
-        await this.gameRepository.save(findByID);
-      } else if (!findByID && findByData) {
-        this.logger.debug('Found game data; Updating id');
-        // game with same data found, wrong id
-        findByData.event_id = new_eventID;
-        findByData.date = new_date;
-        await this.gameRepository.save(findByData);
-      } else if (!findByData && !findByID) {
+      if (findByData) {
+        this.gameRepository.save({
+          id: findByData.id,
+          date: new_date,
+          event_id: new_eventID,
+        });
+      } else {
         // new game => add game
         const dto = new CreateGameDto();
         dto.date = new_date;
@@ -230,7 +204,12 @@ export class CronService {
     const scores = data.filter((e) =>
       ['closed'].includes(e.sport_event_status.status),
     );
-    scores.forEach(async (score) => {
+
+    const gamedaySet: number[] = [];
+    const gameSet: Game[] = [];
+
+    for (let i = 0; i < scores.length; i++) {
+      const score = scores[i];
       const game = await this.gameRepository.findOne({
         event_id: score.sport_event.id,
       });
@@ -239,7 +218,11 @@ export class CronService {
         return;
       }
 
-      const wasNotComplete: boolean = game.completed == 0;
+      if (game.completed == 0)
+        if (!gamedaySet.includes(game.gameday)) {
+          gamedaySet.push(game.gameday);
+          gameSet.push(game);
+        }
 
       const update = new UpdateGameDto();
       update.bet = this.getSpecialBet(game.special_bet.id, score.statistics);
@@ -247,9 +230,8 @@ export class CronService {
       update.team2 = score.sport_event_status.away_score;
 
       await this.gameService.updateGame(update, game.id);
-
-      if (wasNotComplete) this.checkIfGamedayIsFinished(game);
-    });
+    }
+    gameSet.forEach((game) => this.checkIfGamedayIsFinished(game));
   }
 
   async checkIfGamedayIsFinished(game: Game) {
@@ -391,8 +373,6 @@ export class CronService {
     groupName: string,
     standings: string,
   ) {
-    const topic = group_id;
-
     const message = {
       notification: {
         title: game.season.name + ' gameday ' + game.gameday + ' is over.',
@@ -405,7 +385,7 @@ export class CronService {
           channelId: 'General',
         },
       },
-      topic: topic,
+      topic: group_id,
     };
 
     admin
