@@ -48,11 +48,12 @@ jobs:
             docker pull ghcr.io/tobi2k/tippspiel:${{ needs.build.outputs.branch_name }}
             docker stop top-tips-server
             docker rm top-tips-server
-            export API_KEY=${{ env.API_KEY }}
-            export FIREBASE_PROJECT_ID=${{ env.FIREBASE_PROJECT_ID }}
-            export FIREBASE_PRIVATE_KEY=${{ env.FIREBASE_PRIVATE_KEY }}
-            export FIREBASE_CLIENT_EMAIL=${{ env.FIREBASE_CLIENT_EMAIL }}
-            docker run -d --restart unless-stopped --network host --name=top-tips-server ghcr.io/tobi2k/tippspiel:${{ needs.build.outputs.branch_name }}
+            rm ./.env && touch ./.env
+            echo 'API_KEY=${{ env.API_KEY }}' >> ./.env
+            echo 'FIREBASE_PROJECT_ID=${{ env.FIREBASE_PROJECT_ID }}' >> ./.env
+            echo 'FIREBASE_PRIVATE_KEY=${{ env.FIREBASE_PRIVATE_KEY }}' >> ./.env
+            echo 'FIREBASE_CLIENT_EMAIL=${{ env.FIREBASE_CLIENT_EMAIL }}' >> ./.env
+            docker run -d --restart unless-stopped --network host --name=top-tips-server --env-file ./.env ghcr.io/tobi2k/tippspiel:${{ needs.build.outputs.branch_name }}
           host: ${{ secrets.HOST }}
           user: root
           key: ${{ secrets.PRIVATE_KEY}}
