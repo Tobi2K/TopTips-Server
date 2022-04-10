@@ -2,8 +2,6 @@ FROM node:14
 
 ENV APP_PORT 3000
 
-RUN echo ${API_KEY}
-
 ENV TZ=Europe/Berlin
 
 EXPOSE 3000

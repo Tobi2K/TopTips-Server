@@ -5,8 +5,9 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   require('dotenv').config();
+  console.log(process.env.FIREBASE_PRIVATE_KEY);
 
-  const { privateKey } = JSON.parse(process.env.private_key);
+  const { privateKey } = JSON.parse(process.env.FIREBASE_PRIVATE_KEY);
 
   console.log(privateKey);
 
