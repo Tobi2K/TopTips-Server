@@ -35,3 +35,13 @@ jobs:
         with:
           push: true
           tags: ghcr.io/tobi2k/tippspiel:${{ steps.branch-name.outputs.current_branch }}
+          
+      - name: SSH into server and pull image
+        uses: fifsky/ssh-action@master
+        with:
+          command: |
+            cd /tmp
+            ls -a
+          host: ${{ secrets.HOST }}
+          user: root
+          key: ${{ secrets.PRIVATE_KEY}}
