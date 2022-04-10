@@ -84,13 +84,18 @@ export class AuthService {
   async updateUserByJWT(body: ChangeNameDto, user: { username: string }) {
     const dbuser = await this.usersService.findOne(user.username);
 
-    if (dbuser.name == body.name) return;
+    if (dbuser.name == body.name) {
+      throw new HttpException(
+        'That is your username already.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
 
     const newUser = await this.usersService.findOne(body.name);
 
     if (newUser) {
       throw new HttpException(
-        'A user with that name exists!',
+        'A user with that username exists!',
         HttpStatus.FORBIDDEN,
       );
     } else {

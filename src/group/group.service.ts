@@ -5,9 +5,7 @@ import {
   HttpService,
   Logger,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AuthService } from 'src/auth/auth.service';
 import { GroupMembers } from 'src/database/entities/group-members.entity';
 import { Group } from 'src/database/entities/group.entity';
 import { UsersService } from 'src/users/users.service';
@@ -18,7 +16,6 @@ import { JoinGroupDto } from 'src/dtos/join-group.dto';
 import { Season } from 'src/database/entities/season.entity';
 import { Team } from 'src/database/entities/team.entity';
 import { CronService } from 'src/cron/cron.service';
-import { User } from 'src/database/entities/user.entity';
 import { Points } from 'src/database/entities/points.entity';
 import { Guess } from 'src/database/entities/guess.entity';
 import { ChangeNameDto } from 'src/dtos/change-name.dto';

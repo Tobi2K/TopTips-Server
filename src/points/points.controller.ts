@@ -16,4 +16,9 @@ export class PointsController {
   calculate(@Param('game_id') game_id: number) {
     return this.pointsService.calculateGamePoints(game_id);
   }
+
+  @Get('user/rank')
+  async getUserRank(@Request() req) {
+    return await this.pointsService.getUserRank(req.user);
+  }
 }

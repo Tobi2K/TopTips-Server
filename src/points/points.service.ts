@@ -1,4 +1,10 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Game } from 'src/database/entities/game.entity';
 import { GroupMembers } from 'src/database/entities/group-members.entity';
@@ -7,6 +13,7 @@ import { Guess } from 'src/database/entities/guess.entity';
 import { Points } from 'src/database/entities/points.entity';
 import { User } from 'src/database/entities/user.entity';
 import { GroupService } from 'src/group/group.service';
+import { UsersService } from 'src/users/users.service';
 import { Connection, Repository } from 'typeorm';
 
 @Injectable()
@@ -17,6 +24,8 @@ export class PointsService {
 
     @Inject(forwardRef(() => GroupService))
     private readonly groupService: GroupService,
+    @Inject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
     private connection: Connection,
   ) {}
 
@@ -180,5 +189,54 @@ export class PointsService {
       points_by_gameday.push(sum);
     }
     return points_by_gameday;
+  }
+
+  async getUserRank(user: { username: string }) {
+    const dbuser = await this.usersService.findOne(user.username);
+
+    if (dbuser) {
+      const ranking = await this.connection
+        .getRepository(Points)
+        .createQueryBuilder('points')
+        .select([
+          'user_id, SUM(points) total_points, RANK() OVER (ORDER BY total_points DESC) user_rank',
+        ])
+        .groupBy('user_id')
+        .getRawMany();
+
+      const groups = await this.connection.getRepository(GroupMembers).find({
+        where: {
+          user: dbuser,
+        },
+      });
+
+      const userCount = (
+        await this.connection.getRepository(User).findAndCount()
+      )[1];
+
+      const temp = ranking.filter((value) => {
+        // { "user_id", "total_points", "user_rank" }
+        if (value.user_id == dbuser.id) return value;
+      })[0];
+
+      if (temp && temp.total_points && temp.user_rank) {
+        return {
+          rank: temp.user_rank,
+          points: temp.total_points,
+          groups: groups?.length,
+        };
+      } else {
+        return {
+          rank: userCount,
+          points: 0,
+          groups: groups?.length,
+        };
+      }
+    } else {
+      throw new HttpException(
+        'Something went wrong. Please logout and log back in.',
+        HttpStatus.NOT_FOUND,
+      );
+    }
   }
 }
