@@ -48,7 +48,7 @@ jobs:
             docker pull ghcr.io/tobi2k/tippspiel:${{ needs.build.outputs.branch_name }}
             docker stop top-tips-server
             docker rm top-tips-server
-            docker run -d --restart unless-stopped --network host --name=top-tips-server -e $API_KEY -e $FIREBASE_PROJECT_ID -e $FIREBASE_PRIVATE_KEY -e $FIREBASE_CLIENT_EMAIL ghcr.io/tobi2k/tippspiel:${{ needs.build.outputs.branch_name }}
+            docker run -d --restart unless-stopped --network host --name=top-tips-server -e ${{ env.API_KEY }} -e ${{ env.FIREBASE_PROJECT_ID }} -e ${{ env.FIREBASE_PRIVATE_KEY }} -e ${{ env.FIREBASE_CLIENT_EMAIL }} ghcr.io/tobi2k/tippspiel:${{ needs.build.outputs.branch_name }}
           host: ${{ secrets.HOST }}
           user: root
           key: ${{ secrets.PRIVATE_KEY}}
