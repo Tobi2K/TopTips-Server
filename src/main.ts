@@ -6,8 +6,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   require('dotenv').config();
 
-  console.log(process.env.API_KEY);
-
   admin.initializeApp({
     credential: admin.credential.cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
@@ -21,8 +19,8 @@ async function bootstrap() {
   app.enableCors();
 
   const config = new DocumentBuilder()
-    .setTitle('Tippspiel')
-    .setDescription('The Tippspiel API description')
+    .setTitle('Top Tips')
+    .setDescription('The Top Tips API description')
     .setVersion('1.0')
     .addBearerAuth(
       {
