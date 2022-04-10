@@ -6,12 +6,14 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   require('dotenv').config();
 
-  console.log(process.env.API_KEY);
+  const { privateKey } = JSON.parse(process.env.private_key);
+
+  console.log(privateKey);
 
   admin.initializeApp({
     credential: admin.credential.cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY,
+      privateKey,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
     }),
     projectId: 'top-tips-online',
