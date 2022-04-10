@@ -1,11 +1,4 @@
-import {
-  forwardRef,
-  HttpException,
-  HttpStatus,
-  Inject,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Guess } from 'src/database/entities/guess.entity';
 import { Connection, Repository } from 'typeorm';
@@ -13,11 +6,10 @@ import { CreateGuessDto } from 'src/dtos/create-guess.dto';
 import { Game } from 'src/database/entities/game.entity';
 import { Group } from 'src/database/entities/group.entity';
 import { User } from 'src/database/entities/user.entity';
-import { GroupMembers } from 'src/database/entities/group-members.entity';
 import { GroupService } from 'src/group/group.service';
 import { Points } from 'src/database/entities/points.entity';
 
-var moment = require('moment');
+import moment from 'moment';
 
 @Injectable()
 export class GuessService {
@@ -145,7 +137,7 @@ export class GuessService {
           game: dbgame,
         },
       });
-      let result = el as any;
+      const result = el as any;
       if (dbpoints) {
         result.points = dbpoints.points;
       }
@@ -252,7 +244,7 @@ export class GuessService {
         }
       }
 
-      let x = {
+      const x = {
         name: val.user.name,
         guess_string: guess_string,
         bet: bet,

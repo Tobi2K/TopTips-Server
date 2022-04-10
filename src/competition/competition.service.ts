@@ -1,6 +1,5 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { group } from 'console';
 import { Competition } from 'src/database/entities/competition.entity';
 import { GroupMembers } from 'src/database/entities/group-members.entity';
 import { Group } from 'src/database/entities/group.entity';
@@ -10,7 +9,6 @@ import { Connection, Repository } from 'typeorm';
 
 @Injectable()
 export class CompetitionService {
-  private readonly logger = new Logger(CompetitionService.name);
   constructor(
     @InjectRepository(Competition)
     private competitionRepository: Repository<Competition>,
@@ -88,7 +86,7 @@ export class CompetitionService {
 
   async getActiveSeasons(importance: number) {
     let activeGroups = await this.connection.getRepository(Group).find();
-    var nextWeek = new Date();
+    const nextWeek = new Date();
     nextWeek.setDate(nextWeek.getDate() - 8);
     activeGroups = activeGroups.filter((s) => {
       return (
@@ -98,7 +96,7 @@ export class CompetitionService {
       );
     });
 
-    let seasons: string[] = [];
+    const seasons: string[] = [];
     for (let i = 0; i < activeGroups.length; i++) {
       const season = activeGroups[i].season.season_id;
       if (!seasons.includes(season)) {

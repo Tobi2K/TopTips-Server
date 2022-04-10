@@ -17,9 +17,9 @@ import { Team } from 'src/database/entities/team.entity';
 import { CreateGameDto } from 'src/dtos/create-game.dto';
 import { UpdateGameDto } from 'src/dtos/update-game.dto';
 import { GameService } from 'src/game/game.service';
-import { Connection, Like, Repository } from 'typeorm';
+import { Connection, Repository } from 'typeorm';
 
-var moment = require('moment');
+import moment from 'moment';
 
 import { createHash } from 'crypto';
 import { Points } from 'src/database/entities/points.entity';
@@ -122,7 +122,7 @@ export class CronService {
 
   async getActiveSeasons(importance: number) {
     let activeGroups = await this.connection.getRepository(Group).find();
-    var nextWeek = new Date();
+    const nextWeek = new Date();
     nextWeek.setDate(nextWeek.getDate() - 8);
     activeGroups = activeGroups.filter((s) => {
       return (
@@ -132,7 +132,7 @@ export class CronService {
       );
     });
 
-    let seasons: string[] = [];
+    const seasons: string[] = [];
     for (let i = 0; i < activeGroups.length; i++) {
       const season = activeGroups[i].season.season_id;
       if (!seasons.includes(season)) {
@@ -165,7 +165,16 @@ export class CronService {
         )[0],
       );
 
-      const new_stage = game.sport_event.sport_event_context.round.name ?? null;
+      let new_stage = game.sport_event.sport_event_context.round.name ?? null;
+      if (new_stage != null)
+        new_stage = (new_stage as string)
+          .replace(/_/g, ' ')
+          .toLowerCase()
+          .split(' ')
+          .map(function (word) {
+            return word[0].toUpperCase() + word.substr(1);
+          })
+          .join(' ');
 
       const findByData: Game = await this.gameRepository.findOne({
         relations: ['team1', 'team2', 'special_bet'],
@@ -285,7 +294,7 @@ export class CronService {
       points = points.concat(game_points);
     }
 
-    let transformed = [];
+    const transformed = [];
 
     for (let i = 0; i < points.length; i++) {
       const element = points[i];
@@ -393,7 +402,13 @@ export class CronService {
       .send(message)
       .then(() => {
         // Response is a message ID string.
-        this.logger.debug('Successfully sent group message');
+        this.logger.debug(
+          'Successfully sent group message for ' +
+            groupName +
+            ' (id: ' +
+            group_id +
+            ')',
+        );
       })
       .catch((error) => {
         this.logger.error('Error sending message:', error);
@@ -632,7 +647,7 @@ export class CronService {
       .innerJoinAndSelect('group.season', 's')
       .getMany();
 
-    let groupSet = new Set();
+    const groupSet = new Set();
 
     for (let i = 0; i < groups.length; i++) {
       groupSet.add(groups[i].season.season_id);
@@ -705,14 +720,11 @@ export class CronService {
           },
         });
         let past_game_count = 0;
-        let pending_game_count = 0;
 
         games.forEach((game) => {
           if (moment(game.date) < moment().startOf('day')) {
             // past game
             past_game_count++;
-          } else {
-            pending_game_count++;
           }
         });
 
@@ -733,7 +745,7 @@ export class CronService {
     });
   }
 
-  async getLastGameday(season_id: String) {
+  async getLastGameday(season_id: string) {
     const x = await this.connection
       .getRepository(Game)
       .createQueryBuilder('game')
@@ -781,7 +793,7 @@ export class CronService {
     const background_color = '#' + slicedHash;
 
     // convert hex color to rgb color; further: https://stackoverflow.com/questions/1855884/determine-font-color-based-on-background-color and https://www.w3docs.com/snippets/javascript/how-to-convert-rgb-to-hex-and-vice-versa.html
-    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(
       background_color,
     );
     const rgb = result

@@ -8,7 +8,7 @@ export class CompetitionController {
   constructor(private readonly competitionService: CompetitionService) {}
 
   @Get('country/:country')
-  getCompetitionsForCountry(@Param('country') country: string) {    
+  getCompetitionsForCountry(@Param('country') country: string) {
     return this.competitionService.getCompetitionsForCountry(country);
   }
 

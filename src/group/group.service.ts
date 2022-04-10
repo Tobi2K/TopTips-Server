@@ -61,22 +61,22 @@ export class GroupService {
   async getSingleGroup(user: { username: string }, group_id: number) {
     const db = await this.usersService.findOne(user.username);
     if (db) {
-      let dbgroup = await this.groupRepository.findOne({
+      const dbgroup = await this.groupRepository.findOne({
         where: { id: group_id },
       });
 
       await this.userIsPartOfGroup(db.id, dbgroup.id);
 
       if (dbgroup) {
-        let members = await this.groupMembersRepository.find({
+        const members = await this.groupMembersRepository.find({
           where: { group: dbgroup },
         });
-        let formattedMembers: string[] = [];
+        const formattedMembers: string[] = [];
         members.forEach((element) => {
           formattedMembers.push(element.user.name);
         });
 
-        let formattedGroup: any = dbgroup;
+        const formattedGroup: any = dbgroup;
         formattedGroup.members = formattedMembers;
 
         if (dbgroup.owner.id != db.id) {
@@ -134,7 +134,7 @@ export class GroupService {
   async leaveGroup(user: { username: string }, group_id: number) {
     const db = await this.usersService.findOne(user.username);
     if (db) {
-      let dbgroup = await this.groupRepository.findOne({
+      const dbgroup = await this.groupRepository.findOne({
         where: { id: group_id },
       });
 
@@ -200,7 +200,7 @@ export class GroupService {
   async deleteGroup(user: { username: string }, group_id: number) {
     const db = await this.usersService.findOne(user.username);
     if (db) {
-      let dbgroup = await this.groupRepository.findOne({
+      const dbgroup = await this.groupRepository.findOne({
         where: { id: group_id },
       });
 
@@ -267,7 +267,7 @@ export class GroupService {
   ) {
     const db = await this.usersService.findOne(user.username);
     if (db) {
-      let dbgroup = await this.groupRepository.findOne({
+      const dbgroup = await this.groupRepository.findOne({
         where: { id: group_id },
       });
 
@@ -418,7 +418,7 @@ export class GroupService {
     const background_color = '#' + slicedHash;
 
     // convert hex color to rgb color; further: https://stackoverflow.com/questions/1855884/determine-font-color-based-on-background-color and https://www.w3docs.com/snippets/javascript/how-to-convert-rgb-to-hex-and-vice-versa.html
-    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(
       background_color,
     );
     const rgb = result

@@ -3,9 +3,9 @@ import { AppModule } from './app.module';
 import * as admin from 'firebase-admin';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-async function bootstrap() {
-  require('dotenv').config();
+import 'dotenv/config';
 
+async function bootstrap() {
   const { privateKey } = JSON.parse(process.env.FIREBASE_PRIVATE_KEY);
 
   admin.initializeApp({

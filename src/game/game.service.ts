@@ -80,7 +80,7 @@ export class GameService {
         game_string = '-';
         bet_string = val.special_bet.bet_desc;
       }
-      let x = {
+      const x = {
         id: val.id,
         date: val.date,
         date_string: new Date(val.date).toLocaleString('de-DE', {

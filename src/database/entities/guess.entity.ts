@@ -4,9 +4,6 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
-  ManyToMany,
-  JoinTable,
-  OneToOne,
 } from 'typeorm';
 import { Game } from './game.entity';
 import { Group } from './group.entity';

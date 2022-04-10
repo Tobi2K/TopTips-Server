@@ -1,7 +1,6 @@
 import { Body, Controller, Get, Post, Param, Request } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { CreateGuessDto } from 'src/dtos/create-guess.dto';
-import { UserDto } from 'src/dtos/user.dto';
 import { GuessService } from './guess.service';
 
 @Controller('guess')

@@ -76,8 +76,8 @@ Nest is [MIT licensed](LICENSE).
 
 ```bash
 # pull
-docker pull ghcr.io/tobi2k/tippspiel:latest
+docker pull ghcr.io/tobi2k/top-tips:main
 
 # run
-docker run -d --restart unless-stopped --network host --name=backend ghcr.io/tobi2k/tippspiel:latest
+docker run -d --restart unless-stopped --network host --name=backend ghcr.io/tobi2k/top-tips:main
 ```

@@ -34,7 +34,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: ghcr.io/tobi2k/tippspiel:${{ steps.branch-name.outputs.current_branch }}
+          tags: ghcr.io/tobi2k/top-tips:${{ steps.branch-name.outputs.current_branch }}
   
   deploy:
     needs: build
@@ -45,7 +45,7 @@ jobs:
         uses: fifsky/ssh-action@master
         with:
           command: |
-            docker pull ghcr.io/tobi2k/tippspiel:${{ needs.build.outputs.branch_name }}
+            docker pull ghcr.io/tobi2k/top-tips:${{ needs.build.outputs.branch_name }}
             docker stop top-tips-server
             docker rm top-tips-server
             rm ./.env && touch ./.env
@@ -53,7 +53,7 @@ jobs:
             echo 'FIREBASE_PROJECT_ID=${{ env.FIREBASE_PROJECT_ID }}' >> ./.env
             echo 'FIREBASE_PRIVATE_KEY=${{ env.FIREBASE_PRIVATE_KEY }}' >> ./.env
             echo 'FIREBASE_CLIENT_EMAIL=${{ env.FIREBASE_CLIENT_EMAIL }}' >> ./.env
-            docker run -d --restart unless-stopped --network host --name=top-tips-server --env-file ./.env ghcr.io/tobi2k/tippspiel:${{ needs.build.outputs.branch_name }}
+            docker run -d --restart unless-stopped --network host --name=top-tips-server --env-file ./.env ghcr.io/tobi2k/top-tips:${{ needs.build.outputs.branch_name }}
           host: ${{ secrets.HOST }}
           user: root
           key: ${{ secrets.PRIVATE_KEY}}

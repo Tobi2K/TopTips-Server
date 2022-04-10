@@ -35,3 +35,4 @@ lerna-debug.log*
 
 .env
 top-tips-online-firebase-adminsdk-p5hb4-db7c1e9d40.json
+api_dump.json
