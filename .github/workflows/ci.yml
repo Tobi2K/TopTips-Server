@@ -6,6 +6,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    outputs:
+      branch_name: ${{ steps.branch-name.outputs.current_branch }}
 
     steps:
       - uses: actions/checkout@v2
@@ -36,7 +39,7 @@ jobs:
         uses: fifsky/ssh-action@master
         with:
           command: 
-            docker pull ghcr.io/tobi2k/tippspiel:${{ steps.branch-name.outputs.current_branch }} && ls -a
+            docker pull ghcr.io/tobi2k/tippspiel:${{ needs.build.outputs.branch_name }} && ls -a
           host: ${{ secrets.HOST }}
           user: root
           key: ${{ secrets.PRIVATE_KEY}}
