@@ -35,9 +35,8 @@ jobs:
       - name: SSH into server and pull image
         uses: fifsky/ssh-action@master
         with:
-          command: |
-            docker pull ghcr.io/tobi2k/tippspiel:${{ steps.branch-name.outputs.current_branch }}
-            ls -a
+          command: 
+            docker pull ghcr.io/tobi2k/tippspiel:${{ steps.branch-name.outputs.current_branch }} && ls -a
           host: ${{ secrets.HOST }}
           user: root
           key: ${{ secrets.PRIVATE_KEY}}
