@@ -34,7 +34,7 @@ import { CompetitionModule } from './competition/competition.module';
       port: 3306,
       username: 'root',
       password: 'root',
-      database: 'tippspiel_test',
+      database: 'top_tips',
       entities: [
         User,
         Game,
