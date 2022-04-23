@@ -25,6 +25,12 @@ export class AppController {
   ) {}
 
   @Public()
+  @Get()
+  getStatus() {
+    return this.appService.getHello();
+  }
+
+  @Public()
   @Post('auth/login')
   async login(@Body() body: LoginDto) {
     return await this.authService.login(body);
