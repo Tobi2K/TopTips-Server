@@ -30,7 +30,7 @@
     "@nestjs/typeorm": "^7.1.5",
     "firebase-admin": "^9.11.1",
     "moment": "^2.29.3",
-    "mysql2": "^2.3.0",
+    "mysql2": "^2.3.3",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^6.6.6",
