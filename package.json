@@ -25,7 +25,7 @@
     "@nestjs/common": "^7.6.15",
     "@nestjs/core": "^7.6.15",
     "@nestjs/platform-express": "^7.6.15",
-    "@nestjs/schedule": "^1.0.1",
+    "@nestjs/schedule": "^1.1.0",
     "@nestjs/swagger": "^4.8.2",
     "@nestjs/typeorm": "^7.1.5",
     "firebase-admin": "^9.11.1",
