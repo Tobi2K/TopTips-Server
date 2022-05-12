@@ -6,7 +6,6 @@ import { User } from './database/entities/user.entity';
 import { UsersModule } from './users/users.module';
 import { Game } from './database/entities/game.entity';
 import { GameModule } from './game/game.module';
-import { SpecialBet } from './database/entities/special-bet.entity';
 import { Team } from './database/entities/team.entity';
 import { GuessModule } from './guess/guess.module';
 import { Guess } from './database/entities/guess.entity';
@@ -39,7 +38,6 @@ import { CompetitionModule } from './competition/competition.module';
         User,
         Game,
         Guess,
-        SpecialBet,
         Team,
         Points,
         Group,

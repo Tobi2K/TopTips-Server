@@ -6,7 +6,4 @@ export class UpdateGameDto {
 
   @ApiProperty()
   team2: number;
-
-  @ApiProperty()
-  bet: number;
 }

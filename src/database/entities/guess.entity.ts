@@ -28,9 +28,6 @@ export class Guess {
   @Column({ type: 'int' })
   score_team2: number;
 
-  @Column({ type: 'int' })
-  special_bet: number;
-
   @ManyToOne(() => Group, { eager: true })
   @JoinColumn()
   group: Group;

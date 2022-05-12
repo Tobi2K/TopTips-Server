@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Group } from 'src/database/entities/group.entity';
-import { SpecialBet } from 'src/database/entities/special-bet.entity';
 import { User } from 'src/database/entities/user.entity';
 import { CreateGameDto } from 'src/dtos/create-game.dto';
 import { UpdateGameDto } from 'src/dtos/update-game.dto';
@@ -71,14 +70,11 @@ export class GameService {
     const formatted = [];
 
     games.forEach(function (val) {
-      let bet_string: string;
       let game_string: string;
       if (val.completed == 1) {
         game_string = val.score_team1 + ' : ' + val.score_team2;
-        bet_string = val.special_bet.bet_desc + ': ' + val.special_bet_result;
       } else {
         game_string = '-';
-        bet_string = val.special_bet.bet_desc;
       }
       const x = {
         id: val.id,
@@ -100,8 +96,6 @@ export class GameService {
         team2_text: val.team2.text_color,
         team1_name: val.team1.name,
         team2_name: val.team2.name,
-        bet_name: val.special_bet.bet_desc,
-        bet_string: bet_string,
         game_string: game_string,
         game_desc: val.stage,
       };
@@ -121,10 +115,6 @@ export class GameService {
     game.team1 = body.team1;
     game.team2 = body.team2;
     game.season = body.season;
-    const bet = this.connection.getRepository(SpecialBet).findOne({
-      id: Math.floor(Math.random() * (7 + 1)),
-    });
-    game.special_bet = await bet;
     const x = await this.gameRepository.save(game);
     this.logger.debug('Adding game with id: ' + x.id);
   }
@@ -138,7 +128,6 @@ export class GameService {
       {
         score_team1: body.team1,
         score_team2: body.team2,
-        special_bet_result: body.bet,
         completed: 1,
       },
     );

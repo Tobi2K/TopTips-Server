@@ -6,7 +6,6 @@ import {
   ManyToOne,
 } from 'typeorm';
 import { Season } from './season.entity';
-import { SpecialBet } from './special-bet.entity';
 import { Team } from './team.entity';
 
 @Entity()
@@ -34,18 +33,11 @@ export class Game {
   @JoinColumn()
   team2: Team;
 
-  @ManyToOne(() => SpecialBet, { eager: true })
-  @JoinColumn()
-  special_bet: SpecialBet;
-
   @Column({ type: 'int', default: 0 })
   score_team1: number;
 
   @Column({ type: 'int', default: 0 })
   score_team2: number;
-
-  @Column({ type: 'int', default: 0 })
-  special_bet_result: number;
 
   @Column({ type: 'tinyint', default: 0 })
   completed: number;

@@ -9,7 +9,7 @@ import { User } from 'src/database/entities/user.entity';
 import { GroupService } from 'src/group/group.service';
 import { Points } from 'src/database/entities/points.entity';
 
-var moment = require('moment');
+const moment = require('moment');
 
 @Injectable()
 export class GuessService {
@@ -50,9 +50,7 @@ export class GuessService {
             ', result: ' +
             body.team1 +
             ' - ' +
-            body.team2 +
-            ', ' +
-            body.bet,
+            body.team2,
         );
         const guess = new Guess();
         guess.game = await this.connection
@@ -61,7 +59,6 @@ export class GuessService {
         guess.user = dbuser;
         guess.score_team1 = body.team1;
         guess.score_team2 = body.team2;
-        guess.special_bet = body.bet;
         guess.group = dbgroup;
         await this.guessRepository.save(guess);
         return 'Guess added successfully';
@@ -77,9 +74,7 @@ export class GuessService {
             ', result: ' +
             body.team1 +
             ' - ' +
-            body.team2 +
-            ', ' +
-            body.bet,
+            body.team2,
         );
         await this.guessRepository.update(
           {
@@ -92,7 +87,6 @@ export class GuessService {
           {
             score_team1: body.team1,
             score_team2: body.team2,
-            special_bet: body.bet,
           },
         );
         return 'Guess updated successfully';
@@ -120,7 +114,7 @@ export class GuessService {
         .innerJoinAndSelect('guess.user', 'u')
         .innerJoinAndSelect('guess.game', 'g')
         .innerJoinAndSelect('guess.group', 'group')
-        .select(['guess.score_team1', 'guess.score_team2', 'guess.special_bet'])
+        .select(['guess.score_team1', 'guess.score_team2'])
         .where('g.id = :game', { game: game_id })
         .andWhere('u.id = :uid', { uid: dbuser.id })
         .andWhere('group.id = :groupID', { groupID: dbgroup.id })
@@ -188,7 +182,6 @@ export class GuessService {
         'guess.id',
         'guess.score_team1',
         'guess.score_team2',
-        'guess.special_bet',
         'u.id',
         'u.name',
         'g.completed',
@@ -204,7 +197,6 @@ export class GuessService {
       const val = guesses[i];
 
       let guess_string: string;
-      let bet: string | number;
       let points: string | number;
 
       const dbpoints = await this.connection.getRepository(Points).findOne({
@@ -219,19 +211,15 @@ export class GuessService {
         // game guesses are not locked in yet
         if (val.score_team1 == 0 && val.score_team2 == 0) {
           guess_string = '-';
-          bet = '-';
         } else {
           guess_string = 'hidden';
-          bet = '?';
         }
       } else {
         if (val.game.completed == 1) {
           if (val.score_team1 == 0 && val.score_team2 == 0) {
             guess_string = '-';
-            bet = '-';
           } else {
             guess_string = val.score_team1 + ' : ' + val.score_team2;
-            bet = val.special_bet;
           }
           if (dbpoints) {
             points = dbpoints.points;
@@ -240,14 +228,12 @@ export class GuessService {
           }
         } else {
           guess_string = '-';
-          bet = '-';
         }
       }
 
       const x = {
         name: val.user.name,
         guess_string: guess_string,
-        bet: bet,
         points: points,
       };
 

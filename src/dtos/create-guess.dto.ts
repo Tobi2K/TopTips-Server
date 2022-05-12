@@ -5,9 +5,6 @@ export class CreateGuessDto {
   game: number;
 
   @ApiProperty()
-  bet: number;
-
-  @ApiProperty()
   team1: number;
 
   @ApiProperty()

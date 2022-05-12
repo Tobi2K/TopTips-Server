@@ -19,7 +19,7 @@ import { UpdateGameDto } from 'src/dtos/update-game.dto';
 import { GameService } from 'src/game/game.service';
 import { Connection, Repository } from 'typeorm';
 
-var moment = require('moment');
+const moment = require('moment');
 
 import { createHash } from 'crypto';
 import { Points } from 'src/database/entities/points.entity';
@@ -177,7 +177,7 @@ export class CronService {
           .join(' ');
 
       const findByData: Game = await this.gameRepository.findOne({
-        relations: ['team1', 'team2', 'special_bet'],
+        relations: ['team1', 'team2'],
         where: {
           gameday: new_gameday,
           stage: new_stage,
@@ -234,7 +234,6 @@ export class CronService {
         }
 
       const update = new UpdateGameDto();
-      update.bet = this.getSpecialBet(game.special_bet.id, score.statistics);
       update.team1 = score.sport_event_status.home_score;
       update.team2 = score.sport_event_status.away_score;
 
@@ -434,47 +433,6 @@ export class CronService {
       return team;
     }
     return team;
-  }
-
-  getSpecialBet(id: number, statistics: any): number {
-    if (!statistics) return -1;
-    const data = statistics.totals.competitors;
-    switch (id) {
-      case 0: // 7m goals
-        return (
-          data[0].statistics.seven_m_goals + data[1].statistics.seven_m_goals
-        );
-
-      case 1: // yellow cards
-        return (
-          data[0].statistics.yellow_cards + data[1].statistics.yellow_cards
-        );
-
-      case 2: // 2 minute penalties
-        return data[0].statistics.suspensions + data[1].statistics.suspensions;
-
-      case 3: // saves
-        return data[0].statistics.saves + data[1].statistics.saves;
-
-      case 4: // field goals
-        return data[0].statistics.field_goals + data[1].statistics.field_goals;
-
-      case 5: // steals
-        return data[0].statistics.steals + data[1].statistics.steals;
-
-      case 6: // blocks
-        return data[0].statistics.blocks + data[1].statistics.blocks;
-
-      case 7: // shot accuracy
-        return Math.floor(
-          (data[0].statistics.shot_accuracy +
-            data[1].statistics.shot_accuracy) /
-            2,
-        );
-
-      default:
-        return -1;
-    }
   }
 
   @Cron('0 0,16-22 * * *', { name: 'sync-important-games' }) // At minute 0 past every hour from 16 through 22. => 7 times daily per important season
