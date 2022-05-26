@@ -113,13 +113,25 @@ export class PointsService {
       .createQueryBuilder('game')
       .innerJoinAndSelect('game.season', 'season')
       .select('MAX(gameday) as max')
-      .where('season.season_id = :sid', {
-        sid: groupMembers[0].group.season.season_id,
+      .where('season.id = :sid', {
+        sid: groupMembers[0].group.season.id,
       })
       .getRawOne();
 
     const title_list = ['Player', 'Total'];
     for (let i = 1; i <= maxGameday.max; i++) title_list.push('Gameday ' + i);
+
+    const special = await this.connection.getRepository(Game).find({
+      where: {
+        season: {
+          id: groupMembers[0].group.season.id,
+        },
+        gameday: -1,
+      },
+    });
+    if (special) {
+      title_list.push('Playoffs');
+    }
 
     const users_list = [];
     for (let i = 0; i < groupMembers.length; i++) {
@@ -166,7 +178,7 @@ export class PointsService {
       .createQueryBuilder('game')
       .innerJoinAndSelect('game.season', 'season')
       .select('MAX(gameday) as max')
-      .where('season.season_id = :sid', { sid: group.season.season_id })
+      .where('season.id = :sid', { sid: group.season.id })
       .getRawOne();
 
     const points_by_gameday = [];
@@ -177,6 +189,28 @@ export class PointsService {
         .where('points.user.id = :uid ', { uid: user.id })
         .andWhere('points.group.id = :gid', { gid: group.id })
         .andWhere('g.gameday = :index', { index: i })
+        .getMany();
+      let sum = 0;
+      gameday.forEach((point) => {
+        sum += point.points;
+      });
+      points_by_gameday.push(sum);
+    }
+    const special = await this.connection.getRepository(Game).find({
+      where: {
+        season: {
+          id: group.season.id,
+        },
+        gameday: -1,
+      },
+    });
+    if (special) {
+      const gameday = await this.pointRepository
+        .createQueryBuilder('points')
+        .innerJoinAndSelect('points.game', 'g')
+        .where('points.user.id = :uid ', { uid: user.id })
+        .andWhere('points.group.id = :gid', { gid: group.id })
+        .andWhere('g.gameday = :index', { index: -1 })
         .getMany();
       let sum = 0;
       gameday.forEach((point) => {

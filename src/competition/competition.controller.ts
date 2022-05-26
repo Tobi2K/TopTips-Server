@@ -23,7 +23,7 @@ export class CompetitionController {
   }
 
   @Get('season/:season_id')
-  getSingleSeason(@Param('season_id') season_id: string) {
+  getSingleSeason(@Param('season_id') season_id: number) {
     return this.competitionService.getSingleSeason(season_id);
   }
 

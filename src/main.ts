@@ -5,6 +5,13 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import 'dotenv/config';
 
+export const options = {
+  headers: {
+    'X-RapidAPI-Host': 'api-handball.p.rapidapi.com',
+    'X-RapidAPI-Key': process.env.API_KEY,
+  },
+};
+
 async function bootstrap() {
   const { privateKey } = JSON.parse(process.env.FIREBASE_PRIVATE_KEY);
 

@@ -24,6 +24,7 @@ const moment = require('moment');
 import { createHash } from 'crypto';
 import { Points } from 'src/database/entities/points.entity';
 import { PointsService } from 'src/points/points.service';
+import { options } from 'src/main';
 @Injectable()
 export class CronService {
   private readonly logger = new Logger(CronService.name);
@@ -38,7 +39,7 @@ export class CronService {
     private readonly httpService: HttpService,
   ) {}
 
-  @Cron(CronExpression.EVERY_DAY_AT_NOON, { name: 'notifications' })
+  //@Cron(CronExpression.EVERY_DAY_AT_NOON, { name: 'notifications' })
   async handleNotifications() {
     this.logger.debug('Checking for games today');
 
@@ -46,11 +47,11 @@ export class CronService {
     const importantSeasons = await this.getActiveSeasons(1);
     const allActiveSeasons = unimportantSeasons.concat(importantSeasons);
 
-    allActiveSeasons.forEach(async (season_id) => {
+    allActiveSeasons.forEach(async (season) => {
       const dbseason = await this.connection
         .getRepository(Season)
         .findOneOrFail({
-          where: { season_id: season_id },
+          where: { id: season.id },
         });
       const games = await this.gameRepository.find({
         where: {
@@ -70,11 +71,11 @@ export class CronService {
       gamedays.sort((x, y) => x - y);
 
       if (gameToday && gamedays.length > 0)
-        this.sendNotification(dbseason.season_id, dbseason.name, gamedays);
+        this.sendNotification(dbseason.id, dbseason.name, gamedays);
     });
   }
 
-  sendNotification(season_id: string, seasonName: string, gamedays: number[]) {
+  sendNotification(id: number, seasonName: string, gamedays: number[]) {
     let days = '';
     if (gamedays.length == 0) {
       this.logger.debug('No Games Today');
@@ -91,7 +92,7 @@ export class CronService {
       days += gamedays[gamedays.length - 1];
     }
 
-    const topic = season_id.split(':').join('');
+    const topic = 'season' + id;
 
     const message = {
       notification: {
@@ -128,13 +129,14 @@ export class CronService {
       return (
         s.season.important == importance &&
         s.season.start_date < new Date() &&
-        s.season.end_date > nextWeek
+        s.season.end_date > nextWeek &&
+        s.season.current
       );
     });
 
-    const seasons: string[] = [];
+    const seasons: Season[] = [];
     for (let i = 0; i < activeGroups.length; i++) {
-      const season = activeGroups[i].season.season_id;
+      const season = activeGroups[i].season;
       if (!seasons.includes(season)) {
         seasons.push(season);
       }
@@ -145,28 +147,24 @@ export class CronService {
   async syncGames(data: any[], new_season: Season) {
     this.logger.debug('Syncing games and times...');
 
-    data = data.filter(
-      (e) => !['postponed'].includes(e.sport_event_status.status),
-    );
-
     data.forEach(async (game) => {
-      const new_eventID = game.sport_event.id;
-      const new_gameday =
-        game.sport_event.sport_event_context.round.number ?? -1;
-      const new_date = game.sport_event.start_time;
-      const new_team1 = await this.mapTeamID(
-        game.sport_event['competitors'].filter((e) =>
-          ['home'].includes(e.qualifier),
-        )[0],
-      );
-      const new_team2 = await this.mapTeamID(
-        game.sport_event['competitors'].filter((e) =>
-          ['away'].includes(e.qualifier),
-        )[0],
-      );
+      const new_eventID = game.id;
+      let new_gameday = game.week;
+      let new_stage = game.week;
+      if (isNaN(new_gameday)) {
+        new_gameday = -1;
+      } else {
+        new_stage = null;
+      }
+      if (new_gameday == null) {
+        new_gameday = 1;
+      }
+      const new_date = game.date;
+      const new_team1 = await this.mapTeamID(game.teams.home);
+      const new_team2 = await this.mapTeamID(game.teams.away);
 
-      let new_stage = game.sport_event.sport_event_context.round.name ?? null;
-      if (new_stage != null)
+      // Not needed for new API, but might be useful later.
+      /*if (new_stage != null)
         new_stage = (new_stage as string)
           .replace(/_/g, ' ')
           .toLowerCase()
@@ -174,22 +172,17 @@ export class CronService {
           .map(function (word) {
             return word[0].toUpperCase() + word.substr(1);
           })
-          .join(' ');
+          .join(' ');*/
 
-      const findByData: Game = await this.gameRepository.findOne({
-        relations: ['team1', 'team2'],
+      const db: Game = await this.gameRepository.findOne({
         where: {
-          gameday: new_gameday,
-          stage: new_stage,
-          team1: new_team1,
-          team2: new_team2,
-          season: new_season,
+          event_id: new_eventID,
         },
       });
 
-      if (findByData) {
+      if (db) {
         this.gameRepository.save({
-          id: findByData.id,
+          id: db.id,
           date: new_date,
           event_id: new_eventID,
         });
@@ -210,9 +203,7 @@ export class CronService {
   }
 
   async syncPoints(data: any[]) {
-    const scores = data.filter((e) =>
-      ['closed'].includes(e.sport_event_status.status),
-    );
+    const scores = data.filter((e) => ['FT'].includes(e.status.short));
 
     const gamedaySet: number[] = [];
     const gameSet: Game[] = [];
@@ -220,7 +211,7 @@ export class CronService {
     for (let i = 0; i < scores.length; i++) {
       const score = scores[i];
       const game = await this.gameRepository.findOne({
-        event_id: score.sport_event.id,
+        event_id: score.id,
       });
 
       if (!game) {
@@ -234,8 +225,8 @@ export class CronService {
         }
 
       const update = new UpdateGameDto();
-      update.team1 = score.sport_event_status.home_score;
-      update.team2 = score.sport_event_status.away_score;
+      update.team1 = score.scores.home;
+      update.team2 = score.scores.away;
 
       await this.gameService.updateGame(update, game.id);
     }
@@ -425,8 +416,8 @@ export class CronService {
       team = new Team();
       team.competitor_id = competitor.id;
       team.name = competitor.name;
-      team.abbreviation = this.generateAbbreviation(competitor);
-      const colors = this.generateColors(competitor.id);
+      team.abbreviation = competitor.name.toUpperCase().slice(0, 3);
+      const colors = this.generateColors(competitor.id + competitor.name);
       team.background_color = colors.background_color;
       team.text_color = colors.text_color;
       this.connection.getRepository(Team).save(team);
@@ -435,27 +426,24 @@ export class CronService {
     return team;
   }
 
-  @Cron('0 0,16-22 * * *', { name: 'sync-important-games' }) // At minute 0 past every hour from 16 through 22. => 7 times daily per important season
+  //@Cron('0 0,16-22 * * *', { name: 'sync-important-games' }) // At minute 0 past every hour from 16 through 22. => 7 times daily per important season
   async syncImportantGames() {
     this.logger.debug('Syncing important games and scores...');
 
     const seasons = await this.getActiveSeasons(1);
     for (let i = 0; i < seasons.length; i++) {
-      const seasonID = seasons[i];
+      const season = seasons[i];
+      const x = options as any;
+      x.params = {
+        league: season.competition.competition_id,
+        season: season.season_id,
+      };
+
       const data = (
         await this.httpService
-          .get(
-            'https://api.sportradar.com/handball/trial/v2/en/seasons/' +
-              seasonID +
-              '/summaries.json?api_key=' +
-              process.env.API_KEY,
-          )
+          .get('https://api-handball.p.rapidapi.com/games', x)
           .toPromise()
-      ).data.summaries as any[];
-
-      const season = await this.connection
-        .getRepository(Season)
-        .findOne({ where: { season_id: seasonID } });
+      ).data.response;
 
       this.syncGames(data, season);
 
@@ -465,27 +453,24 @@ export class CronService {
     }
   }
 
-  @Cron('0 2 * * 1', { name: 'sync-unimportant-games' })
+  //@Cron('0 2 * * 1', { name: 'sync-unimportant-games' })
   async syncUnimportantGames() {
     this.logger.debug('Syncing unimportant games and scores...');
 
     const seasons = await this.getActiveSeasons(0);
     for (let i = 0; i < seasons.length; i++) {
-      const seasonID = seasons[i];
+      const season = seasons[i];
+      const x = options as any;
+      x.params = {
+        league: season.competition.competition_id,
+        season: season.season_id,
+      };
+
       const data = (
         await this.httpService
-          .get(
-            'https://api.sportradar.com/handball/trial/v2/en/seasons/' +
-              seasonID +
-              '/summaries.json?api_key=' +
-              process.env.API_KEY,
-          )
+          .get('https://api-handball.p.rapidapi.com/games', x)
           .toPromise()
-      ).data.summaries as any[];
-
-      const season = await this.connection
-        .getRepository(Season)
-        .findOne({ where: { season_id: seasonID } });
+      ).data.response;
 
       this.syncGames(data, season);
 
@@ -506,16 +491,18 @@ export class CronService {
       return;
     } else {
       this.logger.debug('Adding games for season ' + season.name);
+      const x = options as any;
+      x.params = {
+        league: season.competition.competition_id,
+        season: season.season_id,
+      };
+
       const data = (
         await this.httpService
-          .get(
-            'https://api.sportradar.com/handball/trial/v2/en/seasons/' +
-              season.season_id +
-              '/summaries.json?api_key=' +
-              process.env.API_KEY,
-          )
+          .get('https://api-handball.p.rapidapi.com/games', x)
           .toPromise()
-      ).data.summaries as any[];
+      ).data.response;
+
       this.syncGames(data, season);
     }
   }
@@ -524,114 +511,87 @@ export class CronService {
   async syncLeagues() {
     const data = (
       await this.httpService
-        .get(
-          'http://api.sportradar.us/handball/trial/v2/en/competitions.json?api_key=' +
-            process.env.API_KEY,
-        )
+        .get('https://api-handball.p.rapidapi.com/leagues', options)
         .toPromise()
-    ).data;
+    ).data.response as any[];
 
     const competitionRepository = this.connection.getRepository(Competition);
 
-    const new_leagues: any[] = (
-      await Promise.all(
-        data.competitions.map(async (e) => {
-          const db = await competitionRepository.findOne({
-            competition_id: e.id,
-          });
-          if (!db) return e;
-          return false;
-        }),
-      )
-    ).filter(Boolean);
+    data.forEach(async (league) => {
+      const db = await competitionRepository.findOne({
+        competition_id: league.id,
+      });
 
-    new_leagues.forEach((e) => {
-      this.logger.debug('Adding league ' + e.name);
-      const comp = new Competition();
-      comp.competition_id = e.id;
-      comp.name = e.name;
-      comp.gender = e.gender;
-      comp.country = e.category.name;
+      if (!db) {
+        // new league
+        this.logger.debug('Adding league ' + league.name);
+        const comp = new Competition();
+        comp.competition_id = league.id;
+        comp.name = league.name;
+        comp.country = league.country.name;
 
-      competitionRepository.save(comp);
+        competitionRepository.save(comp);
+        this.syncSeasons(comp, league.seasons);
+      } else {
+        // old league
+        this.syncSeasons(db, league.seasons);
+      }
     });
   }
 
-  @Cron('0 4 1 * *', { name: 'sync-seasons' }) // At 04:00 on day-of-month 1. => 1 time monthly (not per season)
-  async syncSeasons() {
+  async syncSeasons(comp: Competition, season_data: any) {
     const seasonRepository = this.connection.getRepository(Season);
 
-    const data = (
-      await this.httpService
-        .get(
-          'http://api.sportradar.us/handball/trial/v2/en/seasons.json?api_key=' +
-            process.env.API_KEY,
-        )
-        .toPromise()
-    ).data;
-
-    const new_seasons: any[] = (
-      await Promise.all(
-        data.seasons.map(async (e) => {
-          const db = await seasonRepository.findOne({
-            season_id: e.id,
-          });
-          if (!db) return e;
-          return false;
-        }),
-      )
-    ).filter(Boolean);
-
-    new_seasons.forEach(async (e) => {
-      const season = new Season();
-      season.season_id = e.id;
-      season.name = e.name;
-      season.start_date = new Date(e.start_date + 'T00:00:00.000Z');
-      season.end_date = new Date(e.end_date + 'T00:00:00.000Z');
-      season.year = e.year;
-      season.competition = await this.connection
-        .getRepository(Competition)
-        .findOne({ where: { competition_id: e.competition_id } });
-
-      seasonRepository.save(season);
+    season_data.forEach(async (season) => {
+      const db = await seasonRepository.findOne({
+        season_id: season.season,
+        competition: comp,
+      });
+      if (!db) {
+        this.logger.debug('Adding season for ' + comp.name);
+        const seas = new Season();
+        seas.season_id = season.season;
+        seas.name = comp.name + ' ' + season.season;
+        seas.start_date = new Date(season.start + 'T00:00:00.000Z');
+        seas.end_date = new Date(season.end + 'T00:00:00.000Z');
+        seas.competition = comp;
+        seas.current = season.current;
+        seasonRepository.save(seas);
+      } else {
+        db.current = season.current;
+        db.name = comp.name + ' ' + season.season;
+        seasonRepository.save(db);
+      }
     });
   }
 
-  @Cron('0 5 1 * *', { name: 'sync-teams' }) // At 05:00 on day-of-month 1. => 1 time monthly per season
+  //@Cron('0 5 1 * *', { name: 'sync-teams' }) // At 05:00 on day-of-month 1. => 1 time monthly per season
   async syncTeams() {
-    const groups = await this.connection
-      .getRepository(Group)
-      .createQueryBuilder('group')
-      .innerJoinAndSelect('group.season', 's')
-      .getMany();
-
-    const groupSet = new Set();
-
-    for (let i = 0; i < groups.length; i++) {
-      groupSet.add(groups[i].season.season_id);
-    }
-
-    const cleanedGroup = Array.from(groupSet.values());
+    const unimportantSeasons = await this.getActiveSeasons(0);
+    const importantSeasons = await this.getActiveSeasons(1);
+    const allActiveSeasons = unimportantSeasons.concat(importantSeasons);
 
     const teamRepository = this.connection.getRepository(Team);
 
-    for (let i = 0; i < cleanedGroup.length; i++) {
-      const element = cleanedGroup[i];
+    for (let i = 0; i < allActiveSeasons.length; i++) {
+      const element = allActiveSeasons[i];
+
+      const x = options as any;
+
+      x.params = {
+        league: element.competition.competition_id,
+        season: element.season_id,
+      };
 
       const data = (
         await this.httpService
-          .get(
-            'http://api.sportradar.us/handball/trial/v2/en/seasons/' +
-              element +
-              '/competitors.json?api_key=' +
-              process.env.API_KEY,
-          )
+          .get('https://api-handball.p.rapidapi.com/teams', x)
           .toPromise()
-      ).data;
+      ).data.response;
 
       const new_teams: any[] = (
         await Promise.all(
-          data.season_competitors.map(async (e) => {
+          data.map(async (e) => {
             const db = await teamRepository.findOne({
               competitor_id: e.id,
             });
@@ -645,8 +605,8 @@ export class CronService {
         const team = new Team();
         team.competitor_id = e.id;
         team.name = e.name;
-        team.abbreviation = this.generateAbbreviation(e);
-        const colors = this.generateColors(e.id);
+        team.abbreviation = e.name.slice(0, 3).toUpperCase();
+        const colors = this.generateColors(e.id + e.name);
         team.background_color = colors.background_color;
         team.text_color = colors.text_color;
         teamRepository.save(team);
@@ -662,11 +622,8 @@ export class CronService {
     const importantSeasons = await this.getActiveSeasons(1);
     const allActiveSeasons = unimportantSeasons.concat(importantSeasons);
 
-    allActiveSeasons.forEach(async (season_id) => {
-      const lastGameday = await this.getLastGameday(season_id);
-      const season = await this.connection.getRepository(Season).findOne({
-        where: { season_id: season_id },
-      });
+    allActiveSeasons.forEach(async (season) => {
+      const lastGameday = await this.getLastGameday(season);
 
       let currentGameday = 1;
 
@@ -703,43 +660,16 @@ export class CronService {
     });
   }
 
-  async getLastGameday(season_id: string) {
+  async getLastGameday(season: Season) {
     const x = await this.connection
       .getRepository(Game)
       .createQueryBuilder('game')
       .innerJoinAndSelect('game.season', 'season')
       .select('MAX(gameday) as max')
-      .where('season.season_id = :sid', { sid: season_id })
+      .where('season.id = :sid', { sid: season.id })
       .getRawOne();
 
     return x.max;
-  }
-
-  generateAbbreviation(competitor) {
-    let formattedAbbreviation = '';
-    if (competitor && competitor.abbreviation) {
-      formattedAbbreviation = (competitor.abbreviation as string).slice(0, 3);
-    } else if (competitor && competitor.name) {
-      // generate abbreviation
-      const name = (competitor.name as string)
-        .split(' ')
-        .filter((value) => value.length > 0);
-      if (name.length == 1) {
-        formattedAbbreviation = name[0].slice(0, 3);
-      } else if (name.length == 2) {
-        formattedAbbreviation = name[0].slice(0, 2) + name[1].charAt(0);
-      } else if (name.length > 2) {
-        formattedAbbreviation =
-          name[0].charAt(0) + name[1].charAt(0) + name[2].charAt(0);
-      }
-      if (formattedAbbreviation.length != 3) {
-        formattedAbbreviation = 'N/A';
-      }
-    } else {
-      formattedAbbreviation = 'N/A';
-    }
-
-    return formattedAbbreviation;
   }
 
   generateColors(id: string) {

@@ -11,9 +11,6 @@ export class Competition {
   @Column()
   name: string;
 
-  @Column({ default: 'N/A' })
-  gender: string;
-
-  @Column({ default: 'International' })
+  @Column({ default: 'World' })
   country: string;
 }

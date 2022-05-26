@@ -40,7 +40,7 @@ export class GameService {
       .select('game.gameday')
       .addSelect('s')
       .addSelect('game.stage')
-      .where('s.season_id = :sid', { sid: dbseason.season_id })
+      .where('s.id = :sid', { sid: dbseason.id })
       .groupBy('gameday')
       .getMany();
 
@@ -132,18 +132,5 @@ export class GameService {
       },
     );
     this.pointsService.calculateGamePoints(id);
-  }
-
-  async updateGameDate(id: number, date: Date) {
-    this.logger.debug('Updating game date for id: ' + id);
-
-    await this.gameRepository.update(
-      {
-        id: id,
-      },
-      {
-        date: date,
-      },
-    );
   }
 }

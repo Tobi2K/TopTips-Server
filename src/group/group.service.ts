@@ -21,6 +21,7 @@ import { Guess } from 'src/database/entities/guess.entity';
 import { ChangeNameDto } from 'src/dtos/change-name.dto';
 
 import { createHash } from 'crypto';
+import { options } from 'src/main';
 
 @Injectable()
 export class GroupService {
@@ -313,7 +314,7 @@ export class GroupService {
       }
     }
     const season = await this.connection.getRepository(Season).findOne({
-      where: { season_id: body.seasonID },
+      where: { id: body.seasonID },
     });
     this.addTeamsForSeason(season);
     const group = new Group();
@@ -336,20 +337,22 @@ export class GroupService {
   async addTeamsForSeason(season: Season) {
     const teamRepository = this.connection.getRepository(Team);
 
+    const x = options as any;
+
+    x.params = {
+      league: season.competition.competition_id,
+      season: season.season_id,
+    };
+
     const data = (
       await this.httpService
-        .get(
-          'http://api.sportradar.us/handball/trial/v2/en/seasons/' +
-            season.season_id +
-            '/competitors.json?api_key=' +
-            process.env.API_KEY,
-        )
+        .get('https://api-handball.p.rapidapi.com/teams', x)
         .toPromise()
-    ).data;
+    ).data.response;
 
     const new_teams: any[] = (
       await Promise.all(
-        data.season_competitors.map(async (e: { id: any }) => {
+        data.map(async (e: { id: any }) => {
           const db = await teamRepository.findOne({
             competitor_id: e.id,
           });
@@ -363,8 +366,8 @@ export class GroupService {
       const team = new Team();
       team.competitor_id = e.id;
       team.name = e.name;
-      team.abbreviation = this.generateAbbreviation(e);
-      const colors = this.generateColors(e.id);
+      team.abbreviation = e.name.slice(0, 3);
+      const colors = this.generateColors(e.id + e.name);
       team.background_color = colors.background_color;
       team.text_color = colors.text_color;
       teamRepository.save(team);
@@ -382,31 +385,6 @@ export class GroupService {
         HttpStatus.FORBIDDEN,
       );
     } else return true;
-  }
-
-  private generateAbbreviation(competitor) {
-    let formattedAbbreviation = '';
-    if (competitor && competitor.abbreviation) {
-      formattedAbbreviation = (competitor.abbreviation as string).slice(0, 3);
-    } else if (competitor && competitor.name) {
-      // generate abbreviation
-      const name = (competitor.name as string).split(' ').filter(Boolean);
-      if (name.length == 1) {
-        formattedAbbreviation = name[0].slice(0, 3);
-      } else if (name.length == 2) {
-        formattedAbbreviation = name[0].slice(0, 2) + name[1].charAt(0);
-      } else if (name.length > 2) {
-        formattedAbbreviation =
-          name[0].charAt(0) + name[1].charAt(0) + name[2].charAt(0);
-      }
-      if (formattedAbbreviation.length != 3) {
-        formattedAbbreviation = 'N/A';
-      }
-    } else {
-      formattedAbbreviation = 'N/A';
-    }
-
-    return formattedAbbreviation;
   }
 
   private generateColors(id: string) {

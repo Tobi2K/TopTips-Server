@@ -32,16 +32,11 @@ export class CronController {
     return this.cronService.syncLeagues();
   }
 
-  @Get('sync/seasons')
-  syncSeasons() {
-    return this.cronService.syncSeasons();
-  }
-
-  @Get('sync/seasons/:season_id')
-  async syncSingleSeason(@Param('season_id') season_id: string) {
+  @Get('sync/seasons/:season_id') // season id is the id of the season in the db not the season_id in the db
+  async syncSingleSeason(@Param('season_id') season_id: number) {
     const season = await this.connection
       .getRepository(Season)
-      .findOne({ where: { season_id: season_id } });
+      .findOne({ where: { id: season_id } });
 
     return this.cronService.syncGamesForNewGroup(season);
   }
