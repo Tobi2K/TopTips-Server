@@ -39,7 +39,7 @@ export class CronService {
     private readonly httpService: HttpService,
   ) {}
 
-  //@Cron(CronExpression.EVERY_DAY_AT_NOON, { name: 'notifications' })
+  @Cron(CronExpression.EVERY_DAY_AT_NOON, { name: 'notifications' })
   async handleNotifications() {
     this.logger.debug('Checking for games today');
 
@@ -426,7 +426,7 @@ export class CronService {
     return team;
   }
 
-  //@Cron('0 0,16-22 * * *', { name: 'sync-important-games' }) // At minute 0 past every hour from 16 through 22. => 7 times daily per important season
+  @Cron('0 0,16-22 * * *', { name: 'sync-important-games' }) // At minute 0 past every hour from 16 through 22. => 7 times daily per important season
   async syncImportantGames() {
     this.logger.debug('Syncing important games and scores...');
 
@@ -449,11 +449,11 @@ export class CronService {
 
       this.syncPoints(data);
 
-      await new Promise((res) => setTimeout(res, 1000));
+      await new Promise((res) => setTimeout(res, 6000));
     }
   }
 
-  //@Cron('0 2 * * 1', { name: 'sync-unimportant-games' })
+  @Cron('0 2 * * 1', { name: 'sync-unimportant-games' })
   async syncUnimportantGames() {
     this.logger.debug('Syncing unimportant games and scores...');
 
@@ -476,7 +476,7 @@ export class CronService {
 
       this.syncPoints(data);
 
-      await new Promise((res) => setTimeout(res, 1000));
+      await new Promise((res) => setTimeout(res, 6000));
     }
   }
 
@@ -565,7 +565,7 @@ export class CronService {
     });
   }
 
-  //@Cron('0 5 1 * *', { name: 'sync-teams' }) // At 05:00 on day-of-month 1. => 1 time monthly per season
+  @Cron('0 5 1 * *', { name: 'sync-teams' }) // At 05:00 on day-of-month 1. => 1 time monthly per season
   async syncTeams() {
     const unimportantSeasons = await this.getActiveSeasons(0);
     const importantSeasons = await this.getActiveSeasons(1);
@@ -612,7 +612,7 @@ export class CronService {
         teamRepository.save(team);
       });
 
-      await new Promise((res) => setTimeout(res, 1000));
+      await new Promise((res) => setTimeout(res, 6000));
     }
   }
 
