@@ -129,7 +129,8 @@ export class PointsService {
         gameday: -1,
       },
     });
-    if (special) {
+
+    if (special.length > 0) {
       title_list.push('Playoffs');
     }
 
@@ -204,7 +205,7 @@ export class PointsService {
         gameday: -1,
       },
     });
-    if (special) {
+    if (special.length > 0) {
       const gameday = await this.pointRepository
         .createQueryBuilder('points')
         .innerJoinAndSelect('points.game', 'g')
