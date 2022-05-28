@@ -31,6 +31,12 @@ export class AppController {
   }
 
   @Public()
+  @Get('version')
+  getVersion() {
+    return this.appService.getVersion();
+  }
+
+  @Public()
   @Post('auth/login')
   async login(@Body() body: LoginDto) {
     return await this.authService.login(body);

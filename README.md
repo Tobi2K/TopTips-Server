@@ -52,7 +52,7 @@ This is the server part of [Top Tips](https://github.com/Tobi2K/TopTips-App). To
 
 ## How?
 
-This server is an API built with [nest](https://nestjs.com/). It maintains user accounts and groups, leagues, seasons, games, guesses and points. Game data is provided by [Sportradar](https://sportradar.com/)
+This server is an API built with [nest](https://nestjs.com/). It maintains user accounts and groups, leagues, seasons, games, guesses and points. Game data is provided by [RapidAPI](https://rapidapi.com/api-sports/api/api-handball/).
 
 ## Installation
 
