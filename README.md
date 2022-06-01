@@ -10,7 +10,7 @@
 <br>
 <p align="center">
   <a href="#readme">
-    <img alt="GitHub package.json version" src="https://img.shields.io/github/package-json/v/Tobi2K/TopTips-?style=for-the-badge">
+    <img alt="GitHub package.json version" src="https://img.shields.io/github/package-json/v/Tobi2K/TopTips-Server?style=for-the-badge">
   </a>
   <a href="#readme">
     <img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/Tobi2K/TopTips-Server/CI?style=for-the-badge">
