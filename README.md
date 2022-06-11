@@ -24,25 +24,25 @@
 </p>
 <p align="center">
   <a href="#readme">
-    <img alt="GitHub language count" src="https://img.shields.io/github/languages/count/Tobi2K/TopTips-Server?style=flat-square">
+    <img alt="GitHub language count" src="https://img.shields.io/github/languages/count/Tobi2K/TopTips-Server">
   </a>
   <a href="https://www.codefactor.io/repository/github/tobi2k/toptips-server">
-    <img alt="CodeFactor Grade" src="https://img.shields.io/codefactor/grade/github/Tobi2K/TopTips-Server?style=flat-square">
+    <img alt="CodeFactor Grade" src="https://img.shields.io/codefactor/grade/github/Tobi2K/TopTips-Server">
   </a>
   <a href="https://depfu.com/repos/github/Tobi2K/TopTips-Server?project_id=35394">
-    <img alt="Libraries.io dependency status for GitHub repo" src="https://badges.depfu.com/badges/0f5349633499d611ffff672995a14e72/count.svg">
+    <img alt="Depfu depency status" src="https://badges.depfu.com/badges/0f5349633499d611ffff672995a14e72/overview.svg">
   </a>
   <a href="#readme">
-    <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/Tobi2K/TopTips-Server?style=flat-square"></a>
+    <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/Tobi2K/TopTips-Server"></a>
   <a href="#readme">
-    <img alt="Lines of code" src="https://img.shields.io/tokei/lines/github/Tobi2K/TopTips-Server?style=flat-square">
+    <img alt="Lines of code" src="https://img.shields.io/tokei/lines/github/Tobi2K/TopTips-Server">
   </a>
   <br>
   <a href="#readme">
-    <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/Tobi2K/TopTips-Server?style=flat-square">
+    <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/Tobi2K/TopTips-Server">
   </a>
   <a href="#readme">
-    <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/Tobi2K/TopTips-Server?style=flat-square">
+    <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/Tobi2K/TopTips-Server">
   </a>
 </p>
 
