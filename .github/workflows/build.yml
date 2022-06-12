@@ -1,0 +1,34 @@
+name: Test Build
+
+on:
+  push:
+    branches:
+      - '*'
+      - '!main'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    outputs:
+      branch_name: ${{ steps.branch-name.outputs.current_branch }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Docker Login
+        uses: docker/login-action@v1.10.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Branch Name
+        uses: tj-actions/branch-names@v5.1
+        id: branch-name
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          push: false
+          tags: ghcr.io/tobi2k/top-tips
