@@ -22,7 +22,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Branch Name
         uses: tj-actions/branch-names@v5.1
         id: branch-name
