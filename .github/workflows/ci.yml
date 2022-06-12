@@ -33,7 +33,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
-          push: true
+          push: github.ref == 'refs/heads/master'
           tags: ghcr.io/tobi2k/top-tips:${{ steps.branch-name.outputs.current_branch }}
   
   deploy:
