@@ -1,10 +1,6 @@
-import {
-  forwardRef,
-  HttpService,
-  Inject,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+
+import { HttpService } from '@nestjs/axios';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -211,7 +207,9 @@ export class CronService {
     for (let i = 0; i < scores.length; i++) {
       const score = scores[i];
       const game = await this.gameRepository.findOne({
-        event_id: score.id,
+        where: {
+          event_id: score.id,
+        },
       });
 
       if (!game) {
@@ -519,7 +517,9 @@ export class CronService {
 
     data.forEach(async (league) => {
       const db = await competitionRepository.findOne({
-        competition_id: league.id,
+        where: {
+          competition_id: league.id,
+        },
       });
 
       if (!db) {
@@ -544,8 +544,10 @@ export class CronService {
 
     season_data.forEach(async (season) => {
       const db = await seasonRepository.findOne({
-        season_id: season.season,
-        competition: comp,
+        where: {
+          season_id: season.season,
+          competition: comp,
+        },
       });
       if (!db) {
         this.logger.debug('Adding season for ' + comp.name);
@@ -593,7 +595,9 @@ export class CronService {
         await Promise.all(
           data.map(async (e) => {
             const db = await teamRepository.findOne({
-              competitor_id: e.id,
+              where: {
+                competitor_id: e.id,
+              },
             });
             if (!db) return e;
             return false;

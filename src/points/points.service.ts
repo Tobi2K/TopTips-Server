@@ -31,7 +31,9 @@ export class PointsService {
 
   async calculateGamePoints(game_id: number) {
     const game: Game = await this.connection.getRepository(Game).findOne({
-      id: game_id,
+      where: {
+        id: game_id,
+      },
     });
     if (game) {
       const guesses = await this.connection

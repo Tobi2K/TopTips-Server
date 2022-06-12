@@ -1,4 +1,5 @@
-import { HttpModule, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { GroupService } from './group.service';
 import { GroupController } from './group.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';

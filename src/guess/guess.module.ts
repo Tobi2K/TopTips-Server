@@ -1,4 +1,5 @@
-import { HttpModule, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { GuessService } from './guess.service';
 import { GuessController } from './guess.controller';
 import { Guess } from 'src/database/entities/guess.entity';

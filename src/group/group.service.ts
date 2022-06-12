@@ -1,10 +1,5 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  HttpService,
-  Logger,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { GroupMembers } from 'src/database/entities/group-members.entity';
 import { Group } from 'src/database/entities/group.entity';
@@ -314,7 +309,7 @@ export class GroupService {
       }
     }
     const season = await this.connection.getRepository(Season).findOne({
-      where: { id: body.seasonID },
+      where: { id: Number(body.seasonID) },
     });
     this.addTeamsForSeason(season);
     const group = new Group();
@@ -354,7 +349,9 @@ export class GroupService {
       await Promise.all(
         data.map(async (e: { id: any }) => {
           const db = await teamRepository.findOne({
-            competitor_id: e.id,
+            where: {
+              competitor_id: e.id,
+            },
           });
           if (!db) return e;
           return false;

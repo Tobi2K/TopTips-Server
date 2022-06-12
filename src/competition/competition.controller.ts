@@ -28,7 +28,7 @@ export class CompetitionController {
   }
 
   @Get('current/:group_id')
-  getCurrentSection(@Param('group_id') group_id: string) {
+  getCurrentSection(@Param('group_id') group_id: number) {
     return this.competitionService.getCurrentSection(group_id);
   }
 

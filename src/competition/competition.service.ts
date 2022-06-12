@@ -49,7 +49,9 @@ export class CompetitionService {
       const dbgroupmemberships = await this.connection
         .getRepository(GroupMembers)
         .find({
-          user: dbuser,
+          where: {
+            user: dbuser,
+          }
         });
 
       const seasonArray: Season[] = [];
@@ -64,7 +66,7 @@ export class CompetitionService {
       for (const group of dbgroupmemberships) {
         const dbgroup = await this.connection
           .getRepository(Group)
-          .findOne(group.group);
+          .findOne({where: group.group});
 
         if (dbgroup) {
           if (
@@ -121,7 +123,7 @@ export class CompetitionService {
     }
   }
 
-  async getCurrentSection(group_id: string) {
+  async getCurrentSection(group_id: number) {
     const dbgroup = await this.connection.getRepository(Group).findOne({
       where: { id: group_id },
     });
