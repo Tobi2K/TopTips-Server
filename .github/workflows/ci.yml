@@ -1,26 +1,24 @@
-# This is a basic workflow to help you get started with Actions
-
 name: CI
 
-# Controls when the workflow will run
 on:
-  push:
-    branches:
-      - 'main'
+  push
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+env:
+  API_KEY: ${{ secrets.API_KEY }}
+  FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+  FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+  FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    
+    outputs:
+      branch_name: ${{ steps.branch-name.outputs.current_branch }}
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      # Runs a single command using the runners shell
       - name: Docker Login
         uses: docker/login-action@v1.10.0
         with:
@@ -36,4 +34,27 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: ghcr.io/tobi2k/tippspiel:${{ steps.branch-name.outputs.current_branch }}
+          tags: ghcr.io/tobi2k/top-tips:${{ steps.branch-name.outputs.current_branch }}
+  
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH into server and pull image
+        uses: fifsky/ssh-action@master
+        with:
+          command: |
+            docker pull ghcr.io/tobi2k/top-tips:${{ needs.build.outputs.branch_name }}
+            docker stop top-tips-server
+            docker rm top-tips-server
+            rm ./.env && touch ./.env
+            echo 'API_KEY=${{ secrets.API_KEY }}' >> ./.env
+            echo 'JWT_SECRET=${{ secrets.JWT_SECRET }}' >> ./.env
+            echo 'FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}' >> ./.env
+            echo 'FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}' >> ./.env
+            echo 'FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}' >> ./.env
+            docker run -d --restart unless-stopped --network host --name=top-tips-server --env-file ./.env ghcr.io/tobi2k/top-tips:${{ needs.build.outputs.branch_name }}
+          host: ${{ secrets.HOST }}
+          user: root
+          key: ${{ secrets.PRIVATE_KEY}}

@@ -3,9 +3,9 @@ import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
-  user_id: number;
+  id: number;
 
-  @Column()
+  @Column({ unique: true })
   name: string;
 
   @Column()

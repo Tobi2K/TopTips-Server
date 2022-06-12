@@ -1,12 +1,6 @@
-import { Controller, Get, Param } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { Controller } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('users')
-export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
-
-  @Get(':id')
-  findOne(@Param('id') id: number) {
-    return this.usersService.findOne(id);
-  }
-}
+@ApiBearerAuth('access-token')
+export class UsersController {}

@@ -1,9 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Game } from 'src/database/entities/game.entity';
+import { GroupMembers } from 'src/database/entities/group-members.entity';
+import { Group } from 'src/database/entities/group.entity';
 import { Guess } from 'src/database/entities/guess.entity';
 import { Points } from 'src/database/entities/points.entity';
-import { GuessService } from 'src/guess/guess.service';
+import { User } from 'src/database/entities/user.entity';
+import { GroupService } from 'src/group/group.service';
+import { UsersService } from 'src/users/users.service';
 import { Connection, Repository } from 'typeorm';
 
 @Injectable()
@@ -11,94 +21,65 @@ export class PointsService {
   constructor(
     @InjectRepository(Points)
     private pointRepository: Repository<Points>,
+
+    @Inject(forwardRef(() => GroupService))
+    private readonly groupService: GroupService,
+    @Inject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
     private connection: Connection,
-    private readonly guessService: GuessService,
   ) {}
 
-  async getGamedayPoints(day: number) {
-    const ids = await this.connection.getRepository(Game).find({
-      where: { spieltag: day },
-    });
-    let x = [];
-    for (let i = 0; i < ids.length; i++) {
-      const v = await this.pointRepository.findOne({
-        where: { game_id: ids[i].game_id },
-      });
-      x.push(v);
-    }
-    return this.sumPoints(x);
-  }
-
-  async getAllPoints() {
-    const x = await this.pointRepository.createQueryBuilder('points').getMany();
-
-    return this.sumPoints(x);
-  }
-
-  sumPoints(points: Points[]) {
-    let pointsP1 = 0;
-    let pointsP2 = 0;
-    let pointsP3 = 0;
-    points.forEach((p) => {
-      if (p != undefined) {
-        pointsP1 += p.points_player1;
-        pointsP2 += p.points_player2;
-        pointsP3 += p.points_player3;
-      }
-    });
-    return [pointsP1, pointsP2, pointsP3];
-  }
-
   async calculateGamePoints(game_id: number) {
-    const player1: Guess = await this.guessService.getGuess(game_id, 1);
-    const player2: Guess = await this.guessService.getGuess(game_id, 2);
-    const player3: Guess = await this.guessService.getGuess(game_id, 3);
     const game: Game = await this.connection.getRepository(Game).findOne({
-      game_id: game_id,
+      id: game_id,
     });
-    let pointsPlayer1 = 0;
-    let pointsPlayer2 = 0;
-    let pointsPlayer3 = 0;
-    if (player1) pointsPlayer1 = this.calculatePoints(game, player1);
-    if (player2) pointsPlayer2 = this.calculatePoints(game, player2);
-    if (player3) pointsPlayer3 = this.calculatePoints(game, player3);
+    if (game) {
+      const guesses = await this.connection
+        .getRepository(Guess)
+        .find({ where: { game: game } });
 
-    const existingPoints = await this.connection.getRepository(Points).findOne({
-      where: { game_id: game_id },
-    });
-    if (existingPoints == undefined) {
-      const points = new Points();
-      points.game_id = game_id;
-      points.points_player1 = pointsPlayer1;
-      points.points_player2 = pointsPlayer2;
-      points.points_player3 = pointsPlayer3;
-      return this.pointRepository.save(points);
-    } else {
-      return this.pointRepository.update(
-        {
-          game_id: game_id,
-        },
-        {
-          points_player1: pointsPlayer1,
-          points_player2: pointsPlayer2,
-          points_player3: pointsPlayer3,
-        },
-      );
+      guesses.forEach(async (value) => {
+        const points = this.calculatePoints(game, value);
+
+        const existingPoints = await this.connection
+          .getRepository(Points)
+          .findOne({
+            where: { game: game, group: value.group, user: value.user },
+          });
+
+        if (existingPoints) {
+          return this.pointRepository.update(
+            {
+              game: game,
+              group: value.group,
+              user: value.user,
+            },
+            {
+              points: points,
+            },
+          );
+        } else {
+          const point = new Points();
+          point.game = game;
+          point.group = value.group;
+          point.points = points;
+          point.user = value.user;
+          return this.pointRepository.save(point);
+        }
+      });
     }
   }
 
-  calculatePoints(game: Game, guess: Guess) {
+  calculatePoints(game: Game, guess: Guess): number {
     let points = 0;
     const guess_t1 = guess.score_team1;
     const guess_t2 = guess.score_team2;
-    const guess_sb = guess.special_bet;
 
     const guess_dif = guess_t1 - guess_t2;
     const guess_winner = guess_t1 > guess_t2 ? 1 : guess_t1 < guess_t2 ? 2 : 0;
 
     const actual_t1 = game.score_team1;
     const actual_t2 = game.score_team2;
-    const actual_sb = game.special_bet;
 
     const actual_dif = actual_t1 - actual_t2;
     const actual_winner =
@@ -110,8 +91,183 @@ export class PointsService {
     if (guess_dif == actual_dif) points++;
     if (points == 4) points++;
 
-    if (guess_sb == actual_sb) points++;
-
     return points;
+  }
+
+  async getPointsFormatted(groupID: number, user: { username: any }) {
+    const dbuser = await this.connection.getRepository(User).findOne({
+      where: { name: user.username },
+    });
+    await this.groupService.userIsPartOfGroup(dbuser.id, groupID);
+    const groupMembers = await this.connection
+      .getRepository(GroupMembers)
+      .createQueryBuilder('gm')
+      .innerJoinAndSelect('gm.user', 'u')
+      .innerJoinAndSelect('gm.group', 'g')
+      .innerJoinAndSelect('g.season', 's')
+      .where('g.id = :gid', { gid: groupID })
+      .getMany();
+
+    const maxGameday = await this.connection
+      .getRepository(Game)
+      .createQueryBuilder('game')
+      .innerJoinAndSelect('game.season', 'season')
+      .select('MAX(gameday) as max')
+      .where('season.id = :sid', {
+        sid: groupMembers[0].group.season.id,
+      })
+      .getRawOne();
+
+    const title_list = ['Player', 'Total'];
+    for (let i = 1; i <= maxGameday.max; i++) title_list.push('Gameday ' + i);
+
+    const special = await this.connection.getRepository(Game).find({
+      where: {
+        season: {
+          id: groupMembers[0].group.season.id,
+        },
+        gameday: -1,
+      },
+    });
+
+    if (special.length > 0) {
+      title_list.push('Playoffs');
+    }
+
+    const users_list = [];
+    for (let i = 0; i < groupMembers.length; i++) {
+      users_list.push(
+        await this.assembleList(groupMembers[i].user, groupMembers[i].group),
+      );
+    }
+    users_list.sort((a, b) => b[1] - a[1]);
+
+    return [].concat([title_list], users_list);
+  }
+
+  async assembleList(user: User, group: Group) {
+    const single_user_list = [];
+    single_user_list.push(user.name);
+
+    const total = await this.getTotalPointsByPlayer(user, group);
+    single_user_list.push(total);
+    const days = await this.getGameDayPointsByPlayer(user, group);
+    days.forEach((e) => {
+      single_user_list.push(e);
+    });
+
+    return single_user_list;
+  }
+
+  async getTotalPointsByPlayer(user: User, group: Group) {
+    const points = await this.pointRepository.find({
+      where: {
+        user: user,
+        group: group,
+      },
+    });
+    let sum = 0;
+    points.forEach((point) => {
+      sum += point.points;
+    });
+    return sum;
+  }
+
+  async getGameDayPointsByPlayer(user: User, group: Group) {
+    const x = await this.connection
+      .getRepository(Game)
+      .createQueryBuilder('game')
+      .innerJoinAndSelect('game.season', 'season')
+      .select('MAX(gameday) as max')
+      .where('season.id = :sid', { sid: group.season.id })
+      .getRawOne();
+
+    const points_by_gameday = [];
+    for (let i = 1; i <= x.max; i++) {
+      const gameday = await this.pointRepository
+        .createQueryBuilder('points')
+        .innerJoinAndSelect('points.game', 'g')
+        .where('points.user.id = :uid ', { uid: user.id })
+        .andWhere('points.group.id = :gid', { gid: group.id })
+        .andWhere('g.gameday = :index', { index: i })
+        .getMany();
+      let sum = 0;
+      gameday.forEach((point) => {
+        sum += point.points;
+      });
+      points_by_gameday.push(sum);
+    }
+    const special = await this.connection.getRepository(Game).find({
+      where: {
+        season: {
+          id: group.season.id,
+        },
+        gameday: -1,
+      },
+    });
+    if (special.length > 0) {
+      const gameday = await this.pointRepository
+        .createQueryBuilder('points')
+        .innerJoinAndSelect('points.game', 'g')
+        .where('points.user.id = :uid ', { uid: user.id })
+        .andWhere('points.group.id = :gid', { gid: group.id })
+        .andWhere('g.gameday = :index', { index: -1 })
+        .getMany();
+      let sum = 0;
+      gameday.forEach((point) => {
+        sum += point.points;
+      });
+      points_by_gameday.push(sum);
+    }
+    return points_by_gameday;
+  }
+
+  async getUserRank(user: { username: string }) {
+    const dbuser = await this.usersService.findOne(user.username);
+
+    if (dbuser) {
+      const ranking = await this.connection
+        .getRepository(Points)
+        .createQueryBuilder('points')
+        .select([
+          'user_id, SUM(points) total_points, RANK() OVER (ORDER BY total_points DESC) user_rank',
+        ])
+        .groupBy('user_id')
+        .getRawMany();
+
+      const groups = await this.connection.getRepository(GroupMembers).find({
+        where: {
+          user: dbuser,
+        },
+      });
+
+      const userCount = (
+        await this.connection.getRepository(User).findAndCount()
+      )[1];
+
+      const temp = ranking.filter((value) => {
+        // { "user_id", "total_points", "user_rank" }
+        if (value.user_id == dbuser.id) return value;
+      })[0];
+
+      if (temp && temp.total_points && temp.user_rank) {
+        return {
+          rank: temp.user_rank,
+          points: temp.total_points,
+          groups: groups?.length,
+        };
+      } else {
+        return {
+          rank: userCount,
+          points: 0,
+          groups: groups?.length,
+        };
+      }
+    } else {
+      throw new HttpException(
+        'Something went wrong. Please logout and log back in.',
+        HttpStatus.NOT_FOUND,
+      );
+    }
   }
 }
