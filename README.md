@@ -19,7 +19,7 @@
     <img alt="License" src="https://img.shields.io/github/license/Tobi2K/TopTips-Server?style=for-the-badge">
   </a>
   <a href="#readme">
-    <img alt="API" src="https://img.shields.io/website?down_message=offline&label=API&style=for-the-badge&up_color=green&up_message=online&url=https%3A%2F%2Ftop-tips.kalmbach.dev">
+    <img alt="API" src="https://img.shields.io/website?down_message=offline&label=API&style=for-the-badge&up_message=online&url=https%3A%2F%2Ftop-tips.kalmbach.dev">
   </a>
 </p>
 <p align="center">
