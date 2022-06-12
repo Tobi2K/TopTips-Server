@@ -14,7 +14,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     outputs:
       branch_name: ${{ steps.branch-name.outputs.current_branch }}
 
@@ -27,7 +27,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Branch Name
         uses: tj-actions/branch-names@v5.1
         id: branch-name
@@ -37,7 +37,7 @@ jobs:
         with:
           push: true
           tags: ghcr.io/tobi2k/top-tips
-  
+
   deploy:
     needs: build
     runs-on: ubuntu-latest

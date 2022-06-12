@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     outputs:
       branch_name: ${{ steps.branch-name.outputs.current_branch }}
 

@@ -9,10 +9,10 @@ import { User } from 'src/database/entities/user.entity';
 import { GroupService } from 'src/group/group.service';
 import { Points } from 'src/database/entities/points.entity';
 
-const moment = require('moment');
-
 @Injectable()
 export class GuessService {
+  private moment = require('moment');
+
   private readonly logger = new Logger(GuessService.name);
   constructor(
     @InjectRepository(Guess)
@@ -207,7 +207,7 @@ export class GuessService {
         },
       });
 
-      if (moment(dbgame.date) > moment()) {
+      if (this.moment(dbgame.date) > this.moment()) {
         // game guesses are not locked in yet
         if (val.score_team1 == 0 && val.score_team2 == 0) {
           guess_string = '-';

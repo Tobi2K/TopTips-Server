@@ -15,14 +15,13 @@ import { UpdateGameDto } from 'src/dtos/update-game.dto';
 import { GameService } from 'src/game/game.service';
 import { Connection, Repository } from 'typeorm';
 
-const moment = require('moment');
-
 import { createHash } from 'crypto';
 import { Points } from 'src/database/entities/points.entity';
 import { PointsService } from 'src/points/points.service';
 import { options } from 'src/main';
 @Injectable()
 export class CronService {
+  private moment = require('moment');
   private readonly logger = new Logger(CronService.name);
   constructor(
     @InjectRepository(Game)
@@ -58,7 +57,7 @@ export class CronService {
 
       let gameToday = false;
       for (const game of games) {
-        if (moment(game.date).isSame(moment(), 'day')) {
+        if (this.moment(game.date).isSame(this.moment(), 'day')) {
           // there is a game today
           gameToday = true;
           if (!gamedays.includes(game.gameday)) gamedays.push(game.gameday);
@@ -641,7 +640,7 @@ export class CronService {
         let past_game_count = 0;
 
         games.forEach((game) => {
-          if (moment(game.date) < moment().startOf('day')) {
+          if (this.moment(game.date) < this.moment().startOf('day')) {
             // past game
             past_game_count++;
           }

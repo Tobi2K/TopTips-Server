@@ -51,7 +51,7 @@ export class CompetitionService {
         .find({
           where: {
             user: dbuser,
-          }
+          },
         });
 
       const seasonArray: Season[] = [];
@@ -62,11 +62,11 @@ export class CompetitionService {
       const allActiveSeasons = unimportantSeasons.concat(importantSeasons);
       const activeID = allActiveSeasons.map((seas) => {
         return seas.id;
-      })
+      });
       for (const group of dbgroupmemberships) {
         const dbgroup = await this.connection
           .getRepository(Group)
-          .findOne({where: group.group});
+          .findOne({ where: group.group });
 
         if (dbgroup) {
           if (
