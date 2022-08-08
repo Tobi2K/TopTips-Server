@@ -28,7 +28,7 @@
     "@nestjs/typeorm": "^9.0.0",
     "bcrypt": "^5.0.1",
     "dotenv": "^16.0.1",
-    "firebase-admin": "^11.0.0",
+    "firebase-admin": "^11.0.1",
     "moment": "^2.29.4",
     "mysql2": "^2.3.3",
     "passport": "^0.6.0",
