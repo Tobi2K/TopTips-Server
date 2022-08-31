@@ -413,7 +413,7 @@ export class CronService {
       team = new Team();
       team.competitor_id = competitor.id;
       team.name = competitor.name;
-      team.abbreviation = competitor.name.toUpperCase().slice(0, 3);
+      team.abbreviation = competitor.name.slice(0, 3).toString().toUpperCase();
       const colors = this.generateColors(competitor.id + competitor.name);
       team.background_color = colors.background_color;
       team.text_color = colors.text_color;
@@ -608,7 +608,7 @@ export class CronService {
         const team = new Team();
         team.competitor_id = e.id;
         team.name = e.name;
-        team.abbreviation = e.name.slice(0, 3).toUpperCase();
+        team.abbreviation = e.name.slice(0, 3).toString().toUpperCase();
         const colors = this.generateColors(e.id + e.name);
         team.background_color = colors.background_color;
         team.text_color = colors.text_color;
