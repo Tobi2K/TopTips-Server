@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Group } from 'src/database/entities/group.entity';
+import { Guess } from 'src/database/entities/guess.entity';
 import { User } from 'src/database/entities/user.entity';
 import { CreateGameDto } from 'src/dtos/create-game.dto';
 import { UpdateGameDto } from 'src/dtos/update-game.dto';
@@ -54,15 +55,22 @@ export class GameService {
 
     const games = [];
     for (let i = 0; i < gameDays.length; i++) {
-      games.push(await this.getGamedayFormatted(gameDays[i]));
+      games.push(await this.getGamedayFormatted(gameDays[i], dbuser, dbgroup));
     }
     return games;
   }
 
-  async getGamedayFormatted(day: Game) {
+  async getGamedayFormatted(day: Game, user: User, group: Group) {
     const games = await this.gameRepository.find({
       where: { gameday: day.gameday, season: day.season },
       order: { date: 'ASC' },
+    });
+
+    const guesses = await this.connection.getRepository(Guess).find({
+      where: {
+        user: user,
+        group: group,
+      },
     });
 
     const special = day.gameday == -1;
@@ -70,6 +78,12 @@ export class GameService {
     const formatted = [];
 
     games.forEach(function (val) {
+      const guessed =
+        guesses.filter((guess) => {
+          if (guess.game.id == val.id) {
+            return true;
+          }
+        }).length > 0;
       let game_string: string;
       if (val.completed == 1) {
         game_string = val.score_team1 + ' : ' + val.score_team2;
@@ -98,6 +112,7 @@ export class GameService {
         team2_name: val.team2.name,
         game_string: game_string,
         game_desc: val.stage,
+        guessed: guessed,
       };
 
       formatted.push(x);
