@@ -215,19 +215,15 @@ export class GuessService {
           guess_string = 'hidden';
         }
       } else {
-        if (val.game.completed == 1) {
-          if (val.score_team1 == 0 && val.score_team2 == 0) {
-            guess_string = '-';
-          } else {
-            guess_string = val.score_team1 + ' : ' + val.score_team2;
-          }
-          if (dbpoints) {
-            points = dbpoints.points;
-          } else {
-            points = 'N/A';
-          }
-        } else {
+        if (val.score_team1 == 0 && val.score_team2 == 0) {
           guess_string = '-';
+        } else {
+          guess_string = val.score_team1 + ' : ' + val.score_team2;
+        }
+        if (dbpoints) {
+          points = dbpoints.points;
+        } else {
+          points = 'N/A';
         }
       }
 
