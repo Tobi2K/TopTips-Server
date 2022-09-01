@@ -12,7 +12,7 @@ export const options = {
   },
 };
 
-export const appVersion = '2.2.0';
+export const appVersion = '2.2.1';
 
 async function bootstrap() {
   const { privateKey } = JSON.parse(process.env.FIREBASE_PRIVATE_KEY);
