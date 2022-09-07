@@ -11,4 +11,9 @@ export class GameController {
   getAllGamesFormatted(@Param('group_id') group_id: number, @Request() req) {
     return this.gameService.getAllGamesFormatted(group_id, req.user);
   }
+
+  @Get('days/active/:group_id')
+  getActiveGamedays(@Param('group_id') group_id: number, @Request() req) {
+    return this.gameService.getActiveGamedays(group_id, req.user);
+  }
 }

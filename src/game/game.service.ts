@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Group } from 'src/database/entities/group.entity';
 import { Guess } from 'src/database/entities/guess.entity';
+import { Season } from 'src/database/entities/season.entity';
 import { User } from 'src/database/entities/user.entity';
 import { CreateGameDto } from 'src/dtos/create-game.dto';
 import { UpdateGameDto } from 'src/dtos/update-game.dto';
@@ -12,6 +13,7 @@ import { Game } from '../database/entities/game.entity';
 
 @Injectable()
 export class GameService {
+  private moment = require('moment');
   private readonly logger = new Logger(GameService.name);
   constructor(
     @InjectRepository(Game) private gameRepository: Repository<Game>,
@@ -78,9 +80,11 @@ export class GameService {
     const formatted = [];
 
     games.forEach(function (val) {
+      let guess_string = '';
       const guessed =
         guesses.filter((guess) => {
           if (guess.game.id == val.id) {
+            guess_string = guess.score_team1 + ' : ' + guess.score_team2
             return true;
           }
         }).length > 0;
@@ -113,6 +117,7 @@ export class GameService {
         game_string: game_string,
         game_desc: val.stage,
         guessed: guessed,
+        guess: guess_string,
       };
 
       formatted.push(x);
@@ -147,5 +152,38 @@ export class GameService {
       },
     );
     this.pointsService.calculateGamePoints(id);
+  }
+
+  async getActiveGamedays(group_id: number, user: { username: any }) {
+    const dbgroup = await this.connection.getRepository(Group).findOne({
+      where: { id: group_id },
+    });
+
+    const dbuser = await this.connection
+      .getRepository(User)
+      .findOne({ where: { name: user.username } });
+
+    if (!dbgroup) {
+      throw new HttpException('Group not found.', HttpStatus.NOT_FOUND);
+    }
+
+    await this.groupService.userIsPartOfGroup(dbuser.id, dbgroup.id);
+
+    const games = await this.gameRepository.find({
+      where: {
+        season: dbgroup.season,
+      },
+    });
+    const gamedays: number[] = [];
+
+    for (const game of games) {
+      if (this.moment(game.date).isSame(this.moment(), 'day')) {
+        // there is a game today
+        if (!gamedays.includes(game.gameday)) gamedays.push(game.gameday);
+      }
+    }
+    gamedays.sort((x, y) => x - y);
+
+    return gamedays;
   }
 }
