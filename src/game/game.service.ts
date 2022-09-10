@@ -1,13 +1,20 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import {
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Group } from 'src/database/entities/group.entity';
 import { Guess } from 'src/database/entities/guess.entity';
-import { Season } from 'src/database/entities/season.entity';
 import { User } from 'src/database/entities/user.entity';
 import { CreateGameDto } from 'src/dtos/create-game.dto';
 import { UpdateGameDto } from 'src/dtos/update-game.dto';
 import { GroupService } from 'src/group/group.service';
 import { PointsService } from 'src/points/points.service';
+import { StandingService } from 'src/standing/standing.service';
 import { Connection, Repository } from 'typeorm';
 import { Game } from '../database/entities/game.entity';
 
@@ -21,6 +28,8 @@ export class GameService {
     private readonly pointsService: PointsService,
 
     private readonly groupService: GroupService,
+    @Inject(forwardRef(() => StandingService))
+    private readonly standingService: StandingService,
   ) {}
 
   async getAllGamesFormatted(group_id: number, user: { username: any }) {
@@ -79,12 +88,14 @@ export class GameService {
 
     const formatted = [];
 
-    games.forEach(function (val) {
+    for (let i = 0; i < games.length; i++) {
+      const val = games[i];
+
       let guess_string = '';
       const guessed =
         guesses.filter((guess) => {
           if (guess.game.id == val.id) {
-            guess_string = guess.score_team1 + ' : ' + guess.score_team2
+            guess_string = guess.score_team1 + ' : ' + guess.score_team2;
             return true;
           }
         }).length > 0;
@@ -94,6 +105,16 @@ export class GameService {
       } else {
         game_string = '-';
       }
+
+      const PaH_team1 = await this.standingService.getTeamPositionAndHistory(
+        group.season.id,
+        val.team1.id,
+      );
+      const PaH_team2 = await this.standingService.getTeamPositionAndHistory(
+        group.season.id,
+        val.team2.id,
+      );
+
       const x = {
         id: val.id,
         date: val.date,
@@ -108,10 +129,14 @@ export class GameService {
         team1_abbr: val.team1.abbreviation,
         team1_background: val.team1.background_color,
         team1_text: val.team1.text_color,
+        team1_position: PaH_team1?.position,
+        team1_history: PaH_team1?.history,
         team2_id: val.team2.id,
         team2_abbr: val.team2.abbreviation,
         team2_background: val.team2.background_color,
         team2_text: val.team2.text_color,
+        team2_position: PaH_team2?.position,
+        team2_history: PaH_team2?.history,
         team1_name: val.team1.name,
         team2_name: val.team2.name,
         game_string: game_string,
@@ -121,7 +146,7 @@ export class GameService {
       };
 
       formatted.push(x);
-    });
+    }
 
     return { games: formatted, special: special };
   }
@@ -174,7 +199,7 @@ export class GameService {
         season: dbgroup.season,
       },
     });
-    const gamedays: number[] = [];
+    const gamedays: any[] = [];
 
     for (const game of games) {
       if (this.moment(game.date).isSame(this.moment(), 'day')) {
@@ -183,6 +208,12 @@ export class GameService {
       }
     }
     gamedays.sort((x, y) => x - y);
+
+    const special = gamedays.indexOf(-1);
+
+    if (special != -1) {
+      gamedays[special] = 'Special';
+    }
 
     return gamedays;
   }

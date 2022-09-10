@@ -14,10 +14,20 @@ import { Group } from 'src/database/entities/group.entity';
 import { GroupMembers } from 'src/database/entities/group-members.entity';
 import { UsersService } from 'src/users/users.service';
 import { CronService } from 'src/cron/cron.service';
+import { StandingService } from 'src/standing/standing.service';
+import { Standing } from 'src/database/entities/standing.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Guess, Game, Points, User, Group, GroupMembers]),
+    TypeOrmModule.forFeature([
+      Guess,
+      Game,
+      Points,
+      User,
+      Group,
+      GroupMembers,
+      Standing,
+    ]),
     HttpModule,
   ],
   providers: [
@@ -27,6 +37,7 @@ import { CronService } from 'src/cron/cron.service';
     GroupService,
     UsersService,
     CronService,
+    StandingService,
   ],
   controllers: [GuessController],
 })

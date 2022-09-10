@@ -19,6 +19,8 @@ import { createHash } from 'crypto';
 import { Points } from 'src/database/entities/points.entity';
 import { PointsService } from 'src/points/points.service';
 import { options } from 'src/main';
+import { Standing } from 'src/database/entities/standing.entity';
+import { TeamDetails } from 'src/helper';
 @Injectable()
 export class CronService {
   private moment = require('moment');
@@ -541,29 +543,36 @@ export class CronService {
   async syncSeasons(comp: Competition, season_data: any) {
     const seasonRepository = this.connection.getRepository(Season);
 
-    season_data.forEach(async (season) => {
-      const db = await seasonRepository.findOne({
-        where: {
-          season_id: season.season,
-          competition: comp,
-        },
-      });
-      if (!db) {
-        this.logger.debug('Adding season for ' + comp.name);
-        const seas = new Season();
-        seas.season_id = season.season;
-        seas.name = comp.name + ' ' + season.season;
-        seas.start_date = new Date(season.start + 'T00:00:00.000Z');
-        seas.end_date = new Date(season.end + 'T00:00:00.000Z');
-        seas.competition = comp;
-        seas.current = season.current;
-        seasonRepository.save(seas);
-      } else {
-        db.current = season.current;
-        db.name = comp.name + ' ' + season.season;
-        seasonRepository.save(db);
-      }
-    });
+    season_data.forEach(
+      async (season: {
+        season: string;
+        start: string;
+        end: string;
+        current: boolean;
+      }) => {
+        const db = await seasonRepository.findOne({
+          where: {
+            season_id: season.season,
+            competition: comp,
+          },
+        });
+        if (!db) {
+          this.logger.debug('Adding season for ' + comp.name);
+          const seas = new Season();
+          seas.season_id = season.season;
+          seas.name = comp.name + ' ' + season.season;
+          seas.start_date = new Date(season.start + 'T00:00:00.000Z');
+          seas.end_date = new Date(season.end + 'T00:00:00.000Z');
+          seas.competition = comp;
+          seas.current = season.current;
+          seasonRepository.save(seas);
+        } else {
+          db.current = season.current;
+          db.name = comp.name + ' ' + season.season;
+          seasonRepository.save(db);
+        }
+      },
+    );
   }
 
   @Cron('0 5 1 * *', { name: 'sync-teams' }) // At 05:00 on day-of-month 1. => 1 time monthly per season
@@ -592,7 +601,7 @@ export class CronService {
 
       const new_teams: any[] = (
         await Promise.all(
-          data.map(async (e) => {
+          data.map(async (e: { id: any }) => {
             const db = await teamRepository.findOne({
               where: {
                 competitor_id: e.id,
@@ -705,5 +714,76 @@ export class CronService {
       background_color: background_color,
       text_color: text_color,
     };
+  }
+
+  @Cron('0 6 * * *', { name: 'sync-standing' })
+  async syncStanding() {
+    const importantSeasons = await this.getActiveSeasons(1);
+
+    const teamRepository = this.connection.getRepository(Team);
+
+    for (let i = 0; i < importantSeasons.length; i++) {
+      const season = importantSeasons[i];
+
+      const x = options as any;
+
+      x.params = {
+        league: season.competition.competition_id,
+        season: season.season_id,
+      };
+
+      const data = require('../../keep/standing.json').response[0]; /*(
+        await this.httpService
+          .get('https://api-handball.p.rapidapi.com/standings', x)
+          .toPromise()
+      ).data.response[0];*/
+
+      data.sort(
+        (a: { position: number }, b: { position: number }) =>
+          a.position - b.position,
+      );
+
+      const ranking: TeamDetails[] = [];
+
+      for (let j = 0; j < data.length; j++) {
+        const element = data[j];
+        const team = await teamRepository.findOne({
+          where: {
+            competitor_id: element.team.id,
+          },
+        });
+        ranking.push(
+          new TeamDetails(
+            team.name,
+            team.id,
+            element.position,
+            element.games.win.total,
+            element.games.draw.total,
+            element.games.lose.total,
+            element.goals.for,
+            element.goals.against,
+            element.points,
+            element.form,
+          ),
+        );
+      }
+      const dbstanding = await this.connection.getRepository(Standing).findOne({
+        where: {
+          season: season,
+        },
+      });
+
+      const stand = new Standing();
+      stand.season = season;
+      stand.ranking = JSON.stringify(ranking);
+
+      if (dbstanding) {
+        this.connection.getRepository(Standing).update(dbstanding, stand);
+      } else {
+        this.connection.getRepository(Standing).save(stand);
+      }
+
+      await new Promise((res) => setTimeout(res, 6000));
+    }
   }
 }

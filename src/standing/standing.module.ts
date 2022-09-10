@@ -1,42 +1,40 @@
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
-import { GroupService } from './group.service';
-import { GroupController } from './group.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Group } from 'src/database/entities/group.entity';
-import { UsersService } from 'src/users/users.service';
-import { User } from 'src/database/entities/user.entity';
-import { JwtStrategy } from 'src/auth/jwt.strategy';
+import { CronService } from 'src/cron/cron.service';
 import { GroupMembers } from 'src/database/entities/group-members.entity';
-import { GameService } from 'src/game/game.service';
+import { Group } from 'src/database/entities/group.entity';
+import { Standing } from 'src/database/entities/standing.entity';
+import { GroupService } from 'src/group/group.service';
+import { UsersService } from 'src/users/users.service';
+import { StandingController } from './standing.controller';
+import { StandingService } from './standing.service';
+import { User } from 'src/database/entities/user.entity';
 import { Game } from 'src/database/entities/game.entity';
+import { GameService } from 'src/game/game.service';
 import { PointsService } from 'src/points/points.service';
 import { Points } from 'src/database/entities/points.entity';
-import { CronService } from 'src/cron/cron.service';
-import { StandingService } from 'src/standing/standing.service';
-import { Standing } from 'src/database/entities/standing.entity';
 
 @Module({
   imports: [
-    HttpModule,
     TypeOrmModule.forFeature([
+      Standing,
       Group,
-      User,
       GroupMembers,
+      User,
       Game,
       Points,
-      Standing,
     ]),
+    HttpModule,
   ],
   providers: [
+    StandingService,
     GroupService,
     UsersService,
-    JwtStrategy,
+    CronService,
     GameService,
     PointsService,
-    CronService,
-    StandingService,
   ],
-  controllers: [GroupController],
+  controllers: [StandingController],
 })
-export class GroupModule {}
+export class StandingModule {}

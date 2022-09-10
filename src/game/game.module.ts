@@ -15,6 +15,8 @@ import { UsersService } from 'src/users/users.service';
 import { CronService } from 'src/cron/cron.service';
 import { User } from 'src/database/entities/user.entity';
 import { Team } from 'src/database/entities/team.entity';
+import { StandingService } from 'src/standing/standing.service';
+import { Standing } from 'src/database/entities/standing.entity';
 
 @Module({
   imports: [
@@ -26,6 +28,7 @@ import { Team } from 'src/database/entities/team.entity';
       GroupMembers,
       User,
       Team,
+      Standing,
     ]),
     HttpModule,
   ],
@@ -36,6 +39,7 @@ import { Team } from 'src/database/entities/team.entity';
     GroupService,
     UsersService,
     CronService,
+    StandingService,
   ],
   controllers: [GameController],
 })

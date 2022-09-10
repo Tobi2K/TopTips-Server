@@ -50,4 +50,9 @@ export class CronController {
   syncCurrentGameday() {
     return this.cronService.syncCurrentGameday();
   }
+
+  @Get('sync/standing')
+  syncStanding() {
+    return this.cronService.syncStanding();
+  }
 }

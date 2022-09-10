@@ -24,6 +24,8 @@ import { Competition } from './database/entities/competition.entity';
 import { ConfigModule } from '@nestjs/config';
 import { Season } from './database/entities/season.entity';
 import { CompetitionModule } from './competition/competition.module';
+import { StandingModule } from './standing/standing.module';
+import { Standing } from './database/entities/standing.entity';
 
 @Module({
   imports: [
@@ -44,6 +46,7 @@ import { CompetitionModule } from './competition/competition.module';
         GroupMembers,
         Competition,
         Season,
+        Standing,
       ],
       namingStrategy: new SnakeNamingStrategy(),
       synchronize: true,
@@ -58,6 +61,7 @@ import { CompetitionModule } from './competition/competition.module';
     AuthModule,
     GroupModule,
     CompetitionModule,
+    StandingModule,
   ],
   controllers: [AppController],
   providers: [
