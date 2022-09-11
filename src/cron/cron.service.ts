@@ -44,9 +44,6 @@ export class CronService {
     const importantSeasons = await this.getActiveSeasons(1);
     const allActiveSeasons = unimportantSeasons.concat(importantSeasons);
 
-    console.log(importantSeasons);
-    
-
     allActiveSeasons.forEach(async (season) => {
       const dbseason = await this.connection
         .getRepository(Season)
@@ -109,9 +106,7 @@ export class CronService {
       topic: topic,
     };
 
-    console.log(message);
-
-    /*admin
+    admin
       .messaging()
       .send(message)
       .then((response) => {
@@ -120,7 +115,7 @@ export class CronService {
       })
       .catch((error) => {
         this.logger.error('Error sending message:', error);
-      });*/
+      });
   }
 
   async getActiveSeasons(importance: number) {
