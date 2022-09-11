@@ -716,7 +716,7 @@ export class CronService {
     };
   }
 
-  @Cron('0 6 * * *', { name: 'sync-standing' })
+  @Cron('0 4 * * *', { name: 'sync-standing' })
   async syncStanding() {
     const importantSeasons = await this.getActiveSeasons(1);
 
@@ -732,11 +732,11 @@ export class CronService {
         season: season.season_id,
       };
 
-      const data = require('../../keep/standing.json').response[0]; /*(
+      const data = (
         await this.httpService
           .get('https://api-handball.p.rapidapi.com/standings', x)
           .toPromise()
-      ).data.response[0];*/
+      ).data.response[0];
 
       data.sort(
         (a: { position: number }, b: { position: number }) =>
