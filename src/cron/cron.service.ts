@@ -760,6 +760,8 @@ export class CronService {
             competitor_id: element.team.id,
           },
         });
+        const history = await this.generateHistory(team.id, season.id);
+
         ranking.push(
           new TeamDetails(
             team.name,
@@ -771,7 +773,7 @@ export class CronService {
             element.goals.for,
             element.goals.against,
             element.points,
-            element.form,
+            history,
           ),
         );
       }
@@ -793,5 +795,44 @@ export class CronService {
 
       await new Promise((res) => setTimeout(res, 6000));
     }
+  }
+
+  async generateHistory(team_id: number, season_id: number): Promise<string> {
+    const games = await this.gameRepository
+      .createQueryBuilder('game')
+      .innerJoinAndSelect('game.team1', 'team1')
+      .innerJoinAndSelect('game.team2', 'team2')
+      .where(
+        'season_id = :season_id AND (team1_id = :team_id OR team2_id = :team_id) AND completed = 1',
+        {
+          season_id: season_id,
+          team_id: team_id,
+        },
+      )
+      .orderBy('game.date', 'DESC')
+      .limit(5)
+      .getMany();
+
+    let history_string = '';
+    for (let i = 0; i < games.length; i++) {
+      const game = games[i];
+      const team1 = team_id == game.team1.id;
+      if (game.score_team1 > game.score_team2) {
+        if (team1) {
+          history_string += 'W';
+        } else {
+          history_string += 'L';
+        }
+      } else if (game.score_team1 < game.score_team2) {
+        if (team1) {
+          history_string += 'L';
+        } else {
+          history_string += 'W';
+        }
+      } else {
+        history_string += 'D';
+      }
+    }
+    return history_string;
   }
 }
