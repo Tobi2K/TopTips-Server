@@ -103,7 +103,7 @@ export class GameService {
       if (val.completed == 1) {
         game_string = val.score_team1 + ' : ' + val.score_team2;
       } else {
-        game_string = '-';
+        game_string = 'TBD';
       }
 
       const PaH_team1 = await this.standingService.getTeamPositionAndHistory(
