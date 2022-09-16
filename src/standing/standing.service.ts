@@ -43,7 +43,7 @@ export class StandingService {
     );
   }
 
-  async getTeamPositionAndHistory(season_id: number, team_id: number) {
+  async getTeamStats(season_id: number, team_id: number) {
     const dbstanding = await this.connection.getRepository(Standing).findOne({
       where: {
         season: {
@@ -67,6 +67,11 @@ export class StandingService {
         return {
           position: filtered[0].position,
           history: filtered[0].history,
+          win: filtered[0].win,
+          draw: filtered[0].draw,
+          lose: filtered[0].lose,
+          goals_for: filtered[0].goals_for,
+          goals_against: filtered[0].goals_against,
         };
       }
     }

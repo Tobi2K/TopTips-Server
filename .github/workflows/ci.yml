@@ -53,6 +53,7 @@ jobs:
             rm ./.env && touch ./.env
             echo 'API_KEY=${{ secrets.API_KEY }}' >> ./.env
             echo 'APP_VERSION=${{ secrets.APP_VERSION }}' >> ./.env
+            echo 'CRON=${{ secrets.CRON }}' >> ./.env
             echo 'JWT_SECRET=${{ secrets.JWT_SECRET }}' >> ./.env
             echo 'FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}' >> ./.env
             echo 'FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}' >> ./.env

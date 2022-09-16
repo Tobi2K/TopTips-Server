@@ -16,6 +16,7 @@ import { PointsController } from './points.controller';
 import { PointsService } from './points.service';
 import { StandingService } from 'src/standing/standing.service';
 import { Standing } from 'src/database/entities/standing.entity';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { Standing } from 'src/database/entities/standing.entity';
       Standing,
     ]),
     HttpModule,
+    ConfigModule,
   ],
   providers: [
     PointsService,

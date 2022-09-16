@@ -21,6 +21,7 @@ import { PointsService } from 'src/points/points.service';
 import { options } from 'src/main';
 import { Standing } from 'src/database/entities/standing.entity';
 import { TeamDetails } from 'src/helper';
+import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class CronService {
   private moment = require('moment');
@@ -34,10 +35,16 @@ export class CronService {
     @Inject(forwardRef(() => PointsService))
     private readonly pointsService: PointsService,
     private readonly httpService: HttpService,
+    @Inject(forwardRef(() => ConfigService))
+    private configService: ConfigService,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_NOON, { name: 'notifications' })
   async handleNotifications() {
+    if (this.configService.get<string>('CRON') != 'enabled') {
+      this.logger.debug('Cron jobs are not enabled!');
+      return;
+    }
     this.logger.debug('Checking for games today');
 
     const unimportantSeasons = await this.getActiveSeasons(0);
@@ -435,6 +442,10 @@ export class CronService {
 
   @Cron('0 0,16-22 * * *', { name: 'sync-important-games' }) // At minute 0 past every hour from 16 through 22. => 7 times daily per important season
   async syncImportantGames() {
+    if (this.configService.get<string>('CRON') != 'enabled') {
+      this.logger.debug('Cron jobs are not enabled!');
+      return;
+    }
     this.logger.debug('Syncing important games and scores...');
 
     const seasons = await this.getActiveSeasons(1);
@@ -462,6 +473,10 @@ export class CronService {
 
   @Cron('0 2 * * 1', { name: 'sync-unimportant-games' })
   async syncUnimportantGames() {
+    if (this.configService.get<string>('CRON') != 'enabled') {
+      this.logger.debug('Cron jobs are not enabled!');
+      return;
+    }
     this.logger.debug('Syncing unimportant games and scores...');
 
     const seasons = await this.getActiveSeasons(0);
@@ -516,6 +531,10 @@ export class CronService {
 
   @Cron('0 3 1 * *', { name: 'sync-leagues' }) // At 03:00 on day-of-month 1. => 1 time monthly (not per season)
   async syncLeagues() {
+    if (this.configService.get<string>('CRON') != 'enabled') {
+      this.logger.debug('Cron jobs are not enabled!');
+      return;
+    }
     const data = (
       await this.httpService
         .get('https://api-handball.p.rapidapi.com/leagues', options)
@@ -585,6 +604,10 @@ export class CronService {
 
   @Cron('0 5 1 * *', { name: 'sync-teams' }) // At 05:00 on day-of-month 1. => 1 time monthly per season
   async syncTeams() {
+    if (this.configService.get<string>('CRON') != 'enabled') {
+      this.logger.debug('Cron jobs are not enabled!');
+      return;
+    }
     const unimportantSeasons = await this.getActiveSeasons(0);
     const importantSeasons = await this.getActiveSeasons(1);
     const allActiveSeasons = unimportantSeasons.concat(importantSeasons);
@@ -726,6 +749,10 @@ export class CronService {
 
   @Cron('0 4 * * *', { name: 'sync-standing' })
   async syncStanding() {
+    if (this.configService.get<string>('CRON') != 'enabled') {
+      this.logger.debug('Cron jobs are not enabled!');
+      return;
+    }
     const importantSeasons = await this.getActiveSeasons(1);
 
     const teamRepository = this.connection.getRepository(Team);

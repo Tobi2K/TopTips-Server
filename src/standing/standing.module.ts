@@ -14,6 +14,7 @@ import { Game } from 'src/database/entities/game.entity';
 import { GameService } from 'src/game/game.service';
 import { PointsService } from 'src/points/points.service';
 import { Points } from 'src/database/entities/points.entity';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { Points } from 'src/database/entities/points.entity';
       Points,
     ]),
     HttpModule,
+    ConfigModule,
   ],
   providers: [
     StandingService,

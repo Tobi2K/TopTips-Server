@@ -272,4 +272,33 @@ export class PointsService {
       );
     }
   }
+
+  async getUserRankInGroup(groupID: number, user: { username: string }) {
+    const dbuser = await this.usersService.findOne(user.username);
+
+    if (dbuser) {
+      const ranking = await this.connection
+        .getRepository(Points)
+        .createQueryBuilder('points')
+        .select([
+          'user_id, SUM(points) total_points, RANK() OVER (ORDER BY total_points DESC) user_rank',
+        ])
+        .where('group_id = :group_id', {
+          group_id: groupID,
+        })
+        .groupBy('user_id')
+        .getRawMany();
+
+      const temp = ranking.filter((value) => {
+        // { "user_id", "total_points", "user_rank" }
+        if (value.user_id == dbuser.id) return value;
+      })[0];
+
+      if (temp) {
+        return '#' + temp.user_rank;
+      } else {
+        return 'N/A';
+      }
+    }
+  }
 }

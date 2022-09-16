@@ -17,6 +17,7 @@ import { User } from 'src/database/entities/user.entity';
 import { Team } from 'src/database/entities/team.entity';
 import { StandingService } from 'src/standing/standing.service';
 import { Standing } from 'src/database/entities/standing.entity';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { Standing } from 'src/database/entities/standing.entity';
       Standing,
     ]),
     HttpModule,
+    ConfigModule,
   ],
   providers: [
     GameService,

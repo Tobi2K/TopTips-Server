@@ -17,6 +17,6 @@ export class StandingController {
     @Param('season_id') season_id: number,
     @Param('team_id') team_id: number,
   ) {
-    return this.standingService.getTeamPositionAndHistory(season_id, team_id);
+    return this.standingService.getTeamStats(season_id, team_id);
   }
 }

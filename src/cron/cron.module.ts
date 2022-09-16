@@ -17,6 +17,7 @@ import { CronController } from './cron.controller';
 import { CronService } from './cron.service';
 import { StandingService } from 'src/standing/standing.service';
 import { Standing } from 'src/database/entities/standing.entity';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { Standing } from 'src/database/entities/standing.entity';
     ]),
     HttpModule,
     GameModule,
+    ConfigModule,
   ],
   providers: [
     GameService,

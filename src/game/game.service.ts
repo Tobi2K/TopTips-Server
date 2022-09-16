@@ -106,11 +106,11 @@ export class GameService {
         game_string = '-';
       }
 
-      const PaH_team1 = await this.standingService.getTeamPositionAndHistory(
+      const PaH_team1 = await this.standingService.getTeamStats(
         group.season.id,
         val.team1.id,
       );
-      const PaH_team2 = await this.standingService.getTeamPositionAndHistory(
+      const PaH_team2 = await this.standingService.getTeamStats(
         group.season.id,
         val.team2.id,
       );
@@ -129,14 +129,12 @@ export class GameService {
         team1_abbr: val.team1.abbreviation,
         team1_background: val.team1.background_color,
         team1_text: val.team1.text_color,
-        team1_position: PaH_team1?.position,
-        team1_history: PaH_team1?.history,
+        team1_stats: PaH_team1,
         team2_id: val.team2.id,
         team2_abbr: val.team2.abbreviation,
         team2_background: val.team2.background_color,
         team2_text: val.team2.text_color,
-        team2_position: PaH_team2?.position,
-        team2_history: PaH_team2?.history,
+        team2_stats: PaH_team2,
         team1_name: val.team1.name,
         team2_name: val.team2.name,
         game_string: game_string,

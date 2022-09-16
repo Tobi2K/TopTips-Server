@@ -15,6 +15,7 @@ import { Points } from 'src/database/entities/points.entity';
 import { CronService } from 'src/cron/cron.service';
 import { StandingService } from 'src/standing/standing.service';
 import { Standing } from 'src/database/entities/standing.entity';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { Standing } from 'src/database/entities/standing.entity';
       Points,
       Standing,
     ]),
+    ConfigModule,
   ],
   providers: [
     GroupService,

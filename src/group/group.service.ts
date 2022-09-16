@@ -1,4 +1,11 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import {
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { InjectRepository } from '@nestjs/typeorm';
 import { GroupMembers } from 'src/database/entities/group-members.entity';
@@ -17,6 +24,7 @@ import { ChangeNameDto } from 'src/dtos/change-name.dto';
 
 import { createHash } from 'crypto';
 import { options } from 'src/main';
+import { PointsService } from 'src/points/points.service';
 
 @Injectable()
 export class GroupService {
@@ -29,6 +37,8 @@ export class GroupService {
     private readonly cronService: CronService,
     private readonly connection: Connection,
     private readonly httpService: HttpService,
+    @Inject(forwardRef(() => PointsService))
+    private readonly pointsService: PointsService,
   ) {}
 
   async getGroups(user: { username: string }) {
@@ -45,7 +55,25 @@ export class GroupService {
         return e;
       });
 
-      return groups;
+      const adaptedGroups = [] as any;
+
+      for (let i = 0; i < groups.length; i++) {
+        const group = groups[i] as any;
+
+        group.rank = await this.pointsService.getUserRankInGroup(
+          group.group.id,
+          user,
+        );
+
+        group.memberCount = await this.groupMembersRepository.count({
+          where: {
+            group: group.group,
+          },
+        });
+        adaptedGroups.push(group);
+      }
+
+      return adaptedGroups;
     } else {
       throw new HttpException(
         'You are not allowed to do that!',
