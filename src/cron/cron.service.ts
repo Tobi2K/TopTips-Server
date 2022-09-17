@@ -747,12 +747,13 @@ export class CronService {
     };
   }
 
-  @Cron('5 15 * * *', { name: 'sync-standing' })
+  @Cron('0 4 * * *', { name: 'sync-standing' })
   async syncStanding() {
     if (this.configService.get<string>('CRON') != 'enabled') {
       this.logger.debug('Cron jobs are not enabled!');
       return;
     }
+    this.logger.debug('Syncing standings...');
     const importantSeasons = await this.getActiveSeasons(1);
 
     const teamRepository = this.connection.getRepository(Team);
