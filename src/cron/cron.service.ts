@@ -747,7 +747,7 @@ export class CronService {
     };
   }
 
-  @Cron('55 14 * * *', { name: 'sync-standing' })
+  @Cron('5 15 * * *', { name: 'sync-standing' })
   async syncStanding() {
     if (this.configService.get<string>('CRON') != 'enabled') {
       this.logger.debug('Cron jobs are not enabled!');
