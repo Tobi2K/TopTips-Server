@@ -9,6 +9,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Group } from 'src/database/entities/group.entity';
 import { Guess } from 'src/database/entities/guess.entity';
+import { Season } from 'src/database/entities/season.entity';
+import { Team } from 'src/database/entities/team.entity';
 import { User } from 'src/database/entities/user.entity';
 import { CreateGameDto } from 'src/dtos/create-game.dto';
 import { UpdateGameDto } from 'src/dtos/update-game.dto';
@@ -214,5 +216,92 @@ export class GameService {
     }
 
     return gamedays;
+  }
+
+  async getGoalStats(team_id: number, season_id: number) {
+    const dbteam = await this.connection.getRepository(Team).findOne({
+      where: {
+        id: team_id,
+      },
+    });
+
+    const dbseason = await this.connection.getRepository(Season).findOne({
+      where: {
+        id: season_id,
+      },
+    });
+
+    if (dbteam && dbseason) {
+      const goals_team1 = await this.gameRepository
+        .createQueryBuilder('game')
+        .innerJoinAndSelect('game.team1', 'team1')
+        .where(
+          'season_id = :season_id AND team1_id = :team_id AND completed = 1',
+          {
+            season_id: season_id,
+            team_id: team_id,
+          },
+        )
+        .select([
+          'AVG(score_team1) goals_avg, MAX(score_team1) goals_max, MIN(score_team1) goals_min',
+        ])
+        .getRawOne();
+
+      const goals_team2 = await this.gameRepository
+        .createQueryBuilder('game')
+        .innerJoinAndSelect('game.team2', 'team2')
+        .where(
+          'season_id = :season_id AND team2_id = :team_id AND completed = 1',
+          {
+            season_id: season_id,
+            team_id: team_id,
+          },
+        )
+        .select([
+          'AVG(score_team2) goals_avg, MAX(score_team2) goals_max, MIN(score_team2) goals_min',
+        ])
+        .getRawOne();
+
+      let avg_goals;
+      let max_goals;
+      let min_goals;
+
+      if (goals_team1.goals_avg & goals_team2.goals_avg) {
+        avg_goals = (
+          (Number(goals_team1.goals_avg) + Number(goals_team2.goals_avg)) /
+          2
+        ).toFixed(2);
+      } else if (goals_team1.goals_avg) {
+        avg_goals = Number(goals_team1.goals_avg).toFixed(2);
+      } else if (goals_team2.goals_avg) {
+        avg_goals = Number(goals_team2.goals_avg).toFixed(2);
+      } else {
+        avg_goals = '-';
+      }
+
+      if (goals_team1.goals_min & goals_team2.goals_min) {
+        min_goals = Math.min(goals_team1.goals_min, goals_team2.goals_min);
+      } else if (goals_team1.goals_min) {
+        min_goals = goals_team1.goals_min;
+      } else if (goals_team2.goals_min) {
+        min_goals = goals_team2.goals_min;
+      } else {
+        min_goals = '-';
+      }
+
+      if (goals_team1.goals_max & goals_team2.goals_max) {
+        max_goals = Math.max(goals_team1.goals_max, goals_team2.goals_max);
+      } else if (goals_team1.goals_max) {
+        max_goals = goals_team1.goals_max;
+      } else if (goals_team2.goals_max) {
+        max_goals = goals_team2.goals_max;
+      } else {
+        max_goals = '-';
+      }
+
+      return { avg_goals, min_goals, max_goals };
+    } else {
+      return null;
+    }
   }
 }

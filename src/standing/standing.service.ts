@@ -72,6 +72,9 @@ export class StandingService {
           lose: filtered[0].lose,
           goals_for: filtered[0].goals_for,
           goals_against: filtered[0].goals_against,
+          goals_max: filtered[0].goals_max,
+          goals_min: filtered[0].goals_min,
+          goals_avg: filtered[0].goals_avg,
         };
       }
     }

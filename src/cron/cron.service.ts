@@ -789,6 +789,11 @@ export class CronService {
         });
         const history = await this.generateHistory(team.id, season.id);
 
+        const goal_stats = await this.gameService.getGoalStats(
+          team.id,
+          season.id,
+        );
+
         ranking.push(
           new TeamDetails(
             team.name,
@@ -799,6 +804,9 @@ export class CronService {
             element.games.lose.total,
             element.goals.for,
             element.goals.against,
+            goal_stats?.max_goals,
+            goal_stats?.min_goals,
+            goal_stats?.avg_goals,
             element.points,
             history,
           ),

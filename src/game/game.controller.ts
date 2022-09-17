@@ -16,4 +16,12 @@ export class GameController {
   getActiveGamedays(@Param('group_id') group_id: number, @Request() req) {
     return this.gameService.getActiveGamedays(group_id, req.user);
   }
+
+  @Get('stats/:team_id/:season_id')
+  getTeamStats(
+    @Param('team_id') team_id: number,
+    @Param('season_id') season_id: number,
+  ) {
+    return this.gameService.getGoalStats(team_id, season_id);
+  }
 }
