@@ -92,7 +92,7 @@ export class AuthService {
   }
 
   async changeEmail(email: ChangeEmailDto, user) {
-    const db_name = await this.usersService.findOne(user.name);
+    const db_name = await this.usersService.findOne(user.username);
 
     const db_email = await this.connection.getRepository(User).findOne({
       where: {
