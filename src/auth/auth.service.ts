@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { Connection } from 'typeorm';
 import { RegisterDto } from 'src/dtos/register.dto';
 import { ChangeNameDto } from 'src/dtos/change-name.dto';
+import { ChangeEmailDto } from 'src/dtos/change-email.dto';
 
 @Injectable()
 export class AuthService {
@@ -43,6 +44,7 @@ export class AuthService {
       return {
         access_token: x,
         name: db.name,
+        email: db.email,
       };
     } else {
       throw new HttpException(
@@ -53,17 +55,29 @@ export class AuthService {
   }
 
   async register(user: RegisterDto) {
-    const db = await this.usersService.findOne(user.name);
+    const db_name = await this.usersService.findOne(user.name);
 
-    if (db) {
+    const db_email = await this.connection.getRepository(User).findOne({
+      where: {
+        email: user.email,
+      },
+    });
+
+    if (db_name) {
       throw new HttpException(
         'A user with that name exists!',
+        HttpStatus.NOT_FOUND,
+      );
+    } else if (db_email) {
+      throw new HttpException(
+        'A user with that email exists!',
         HttpStatus.NOT_FOUND,
       );
     } else {
       bcrypt.hash(user.password, 10, (_err, hash) => {
         const x = new User();
         x.name = user.name;
+        x.email = user.email;
         x.password = hash;
         this.usersService.addUser(x);
       });
@@ -74,6 +88,29 @@ export class AuthService {
           secret: process.env.JWT_SECRET,
         }),
       };
+    }
+  }
+
+  async changeEmail(email: ChangeEmailDto, user) {
+    const db_name = await this.usersService.findOne(user.name);
+
+    const db_email = await this.connection.getRepository(User).findOne({
+      where: {
+        email: email.email,
+      },
+    });
+
+    if (!db_name) {
+      throw new HttpException('User not found!', HttpStatus.NOT_FOUND);
+    } else if (db_email) {
+      throw new HttpException(
+        'A user with that email exists!',
+        HttpStatus.NOT_FOUND,
+      );
+    } else {
+      this.connection.getRepository(User).update(db_name, {
+        email: email.email,
+      });
     }
   }
 

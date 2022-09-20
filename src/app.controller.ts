@@ -9,6 +9,7 @@ import {
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { AuthService } from './auth/auth.service';
+import { ChangeEmailDto } from './dtos/change-email.dto';
 import { ChangeNameDto } from './dtos/change-name.dto';
 import { LoginDto } from './dtos/login.dto';
 import { RegisterDto } from './dtos/register.dto';
@@ -46,6 +47,11 @@ export class AppController {
   @Post('auth/register')
   async register(@Body() body: RegisterDto) {
     return await this.authService.register(body);
+  }
+
+  @Post('auth/update')
+  async changeEmail(@Body() body: ChangeEmailDto, @Request() req) {
+    return await this.authService.changeEmail(body, req.user);
   }
 
   @Get('profile')
