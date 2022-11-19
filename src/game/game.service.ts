@@ -160,6 +160,7 @@ export class GameService {
     game.team1 = body.team1;
     game.team2 = body.team2;
     game.season = body.season;
+    game.postponed = body.postponed;
     const x = await this.gameRepository.save(game);
     this.logger.debug('Adding game with id: ' + x.id);
   }

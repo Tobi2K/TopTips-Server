@@ -23,4 +23,7 @@ export class CreateGameDto {
 
   @ApiProperty()
   season: Season;
+
+  @ApiProperty()
+  postponed: number;
 }

@@ -80,6 +80,10 @@ export class CronService {
   }
 
   sendNotification(id: number, seasonName: string, gamedays: number[]) {
+    if (this.configService.get<string>('CRON') != 'enabled') {
+      this.logger.debug('Cron jobs are not enabled!');
+      return;
+    }
     let days = '';
     if (gamedays.length == 0) {
       this.logger.debug('No Games Today');
@@ -174,6 +178,10 @@ export class CronService {
       const new_date = game.date;
       const new_team1 = await this.mapTeamID(game.teams.home);
       const new_team2 = await this.mapTeamID(game.teams.away);
+      let new_post = 0;
+      if (game.status.short == 'POST') {
+        new_post = 1;
+      }
 
       // Not needed for new API, but might be useful later.
       /*if (new_stage != null)
@@ -197,6 +205,7 @@ export class CronService {
           id: db.id,
           date: new_date,
           event_id: new_eventID,
+          postponed: new_post,
         });
       } else {
         // new game => add game
@@ -208,6 +217,7 @@ export class CronService {
         dto.gameday = new_gameday;
         dto.stage = new_stage;
         dto.season = new_season;
+        dto.postponed = new_post;
 
         this.gameService.addGame(dto);
       }
@@ -386,6 +396,10 @@ export class CronService {
     groupName: string,
     standings: string,
   ) {
+    if (this.configService.get<string>('CRON') != 'enabled') {
+      this.logger.debug('Cron jobs are not enabled!');
+      return;
+    }
     const message = {
       notification: {
         title: game.season.name + ' gameday ' + game.gameday + ' is over.',

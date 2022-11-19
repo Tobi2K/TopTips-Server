@@ -42,6 +42,9 @@ export class Game {
   @Column({ type: 'tinyint', default: 0 })
   completed: number;
 
+  @Column({ type: 'tinyint', default: 0 })
+  postponed: number;
+
   @ManyToOne(() => Season, { eager: true })
   @JoinColumn()
   season: Season;
