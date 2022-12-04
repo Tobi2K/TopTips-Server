@@ -163,7 +163,8 @@ export class CronService {
   async syncGames(data: any[], new_season: Season) {
     this.logger.debug('Syncing games and times...');
 
-    data.forEach(async (game) => {
+    for (let i = 0; i < data.length; i++) {
+      const game = data[i];
       const new_eventID = game.id;
       let new_gameday = game.week;
       let new_stage = game.week;
@@ -221,7 +222,7 @@ export class CronService {
 
         this.gameService.addGame(dto);
       }
-    });
+    }
   }
 
   async syncPoints(data: any[]) {
@@ -477,7 +478,7 @@ export class CronService {
           .toPromise()
       ).data.response;
 
-      this.syncGames(data, season);
+      await this.syncGames(data, season);
 
       this.syncPoints(data);
 
@@ -508,7 +509,7 @@ export class CronService {
           .toPromise()
       ).data.response;
 
-      this.syncGames(data, season);
+      await this.syncGames(data, season);
 
       this.syncPoints(data);
 
