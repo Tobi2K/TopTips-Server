@@ -1,4 +1,4 @@
-FROM node:18.14.0
+FROM node:18.14.1
 
 ENV APP_PORT 3000
 
