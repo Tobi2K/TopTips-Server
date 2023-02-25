@@ -38,7 +38,7 @@
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.8.0",
-    "swagger-ui-express": "^4.6.0",
+    "swagger-ui-express": "^4.6.1",
     "typeorm": "^0.3.12",
     "typeorm-naming-strategies": "^4.1.0"
   },
@@ -59,7 +59,7 @@
     "prettier": "^2.8.4",
     "ts-loader": "^8.0.18",
     "ts-node": "^10.9.1",
-    "tsconfig-paths": "^3.9.0",
+    "tsconfig-paths": "^3.14.2",
     "typescript": "^4.9.5"
   }
 }
