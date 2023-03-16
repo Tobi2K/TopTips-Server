@@ -35,7 +35,7 @@
   <a href="#readme">
     <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/Tobi2K/TopTips-Server"></a>
   <a href="#readme">
-    <img alt="Lines of code" src="https://img.shields.io/tokei/lines/github/Tobi2K/TopTips-Server">
+    <img alt="Lines of code" src="https://tokei.ekzhang.com/b1/github/Tobi2K/TopTips-Server">
   </a>
   <br>
   <a href="#readme">
