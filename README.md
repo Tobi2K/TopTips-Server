@@ -13,7 +13,7 @@
     <img alt="GitHub package.json version" src="https://img.shields.io/github/package-json/v/Tobi2K/TopTips-Server?style=for-the-badge">
   </a>
   <a href="#readme">
-    <img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/Tobi2K/TopTips-Server/CI?style=for-the-badge">
+    <img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/Tobi2K/TopTips-Server/ci.yml?branch=main&style=for-the-badge">
   </a>
   <a href="#license">
     <img alt="License" src="https://img.shields.io/github/license/Tobi2K/TopTips-Server?style=for-the-badge">
