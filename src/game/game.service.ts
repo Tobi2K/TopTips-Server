@@ -177,7 +177,7 @@ export class GameService {
         completed: 1,
       },
     );
-    this.pointsService.calculateGamePoints(id);
+    await this.pointsService.calculateGamePoints(id);
   }
 
   async getActiveGamedays(group_id: number, user: { username: any }) {
