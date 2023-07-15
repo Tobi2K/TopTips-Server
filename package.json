@@ -43,7 +43,7 @@
     "typeorm-naming-strategies": "^4.1.0"
   },
   "devDependencies": {
-    "@nestjs/cli": "^9.5.0",
+    "@nestjs/cli": "^10.0.3",
     "@nestjs/schematics": "^10.0.1",
     "@types/bcrypt": "^5.0.0",
     "@types/cron": "^2.0.1",
