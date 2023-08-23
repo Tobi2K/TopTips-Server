@@ -94,7 +94,11 @@ export class PointsService {
     if (points == 4) points++;
 
     // guess predicted draw correctly
-    if (guess_winner == 0 && actual_winner == 0) points += 2;
+    if (guess_winner == 0 && actual_winner == 0) {
+      points++;
+      // draw predicted perfectly
+      if (guess_t1 == actual_t1 && guess_t2 == actual_t2) points++;
+    }
 
     return points;
   }
