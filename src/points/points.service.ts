@@ -40,21 +40,22 @@ export class PointsService {
         .getRepository(Guess)
         .find({ where: { game: game } });
 
-      guesses.forEach(async (value) => {
-        const points = this.calculatePoints(game, value);
+      for (let i = 0; i < guesses.length; i++) {
+        const userGuess = guesses[i];
+        const points = this.calculatePoints(game, userGuess);
 
         const existingPoints = await this.connection
           .getRepository(Points)
           .findOne({
-            where: { game: game, group: value.group, user: value.user },
+            where: { game: game, group: userGuess.group, user: userGuess.user },
           });
 
         if (existingPoints) {
-          return this.pointRepository.update(
+          await this.pointRepository.update(
             {
               game: game,
-              group: value.group,
-              user: value.user,
+              group: userGuess.group,
+              user: userGuess.user,
             },
             {
               points: points,
@@ -63,12 +64,12 @@ export class PointsService {
         } else {
           const point = new Points();
           point.game = game;
-          point.group = value.group;
+          point.group = userGuess.group;
           point.points = points;
-          point.user = value.user;
-          return this.pointRepository.save(point);
+          point.user = userGuess.user;
+          await this.pointRepository.save(point);
         }
-      });
+      }
     }
   }
 
