@@ -695,7 +695,9 @@ export class CronService {
         let past_game_count = 0;
 
         games.forEach((game) => {
-          if (this.moment(game.date) < this.moment().startOf('day')) {
+          if (
+            this.moment(game.date).add(1, 'days') < this.moment().startOf('day')
+          ) {
             // past game
             past_game_count++;
           }
@@ -704,7 +706,7 @@ export class CronService {
         // if more than 2 games are still to be played, use this gameday as current gameday
         if (past_game_count > games.length - 3) {
           // past games reached critical point
-          currentGameday = Math.min(i + 1, games.length);
+          currentGameday = Math.min(i + 1, lastGameday);
         } else {
           // first gameday that has more than 2 pending games
           currentGameday = i;
