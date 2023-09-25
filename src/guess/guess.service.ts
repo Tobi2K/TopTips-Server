@@ -235,6 +235,7 @@ export class GuessService {
 
       formatted.push(x);
     }
+    formatted.sort((a, b) => a.name.localeCompare(b.name));
     return formatted;
   }
 }
