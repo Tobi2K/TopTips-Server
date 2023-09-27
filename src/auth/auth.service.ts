@@ -114,12 +114,20 @@ export class AuthService {
     }
   }
 
-  async getUserByJWT(token: string) {
-    const decoded = await this.jwtService.verify(token);
-    const db = await this.usersService.findOne(decoded.name);
-    if (db) {
-      return db;
+  // WIP
+  async checkJWT(user) {
+    console.log(user);
+    const payload = { name: user.username };
+    if (user.username) {
+      const token = this.jwtService.sign(payload, {
+        secret: process.env.JWT_SECRET,
+      });
+      return {
+        access_token: token,
+        name: user.username,
+      };
     }
+    return { name: user.username };
   }
 
   async updateUserByJWT(body: ChangeNameDto, user: { username: string }) {

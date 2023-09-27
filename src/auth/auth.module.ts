@@ -14,7 +14,7 @@ import { User } from 'src/database/entities/user.entity';
     UsersModule,
     PassportModule,
     JwtModule.register({
-      signOptions: { expiresIn: '7d' },
+      signOptions: { expiresIn: '14d' },
     }),
     TypeOrmModule.forFeature([User]),
   ],
