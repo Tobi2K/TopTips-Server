@@ -41,7 +41,9 @@ export class GuessService {
       });
       if (existingGuess == undefined) {
         this.logger.debug(
-          'Adding guess with: playerID: ' +
+          'Adding guess with: Name: ' +
+            dbuser.name +
+            ',  playerID: ' +
             dbuser.id +
             ',  gameID: ' +
             body.game +
@@ -65,7 +67,9 @@ export class GuessService {
       } else {
         // update
         this.logger.debug(
-          'Updating guess with: playerID: ' +
+          'Updating guess with: Name: ' +
+            dbuser.name +
+            ',  playerID: ' +
             dbuser.id +
             ',  gameID: ' +
             body.game +
