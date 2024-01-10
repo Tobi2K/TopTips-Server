@@ -391,7 +391,7 @@ export class GroupService {
       const team = new Team();
       team.competitor_id = e.id;
       team.name = e.name;
-      team.abbreviation = e.name.slice(0, 3);
+      team.abbreviation = e.name.slice(0, 3).toString().toUpperCase();
       const colors = this.generateColors(e.id + e.name);
       team.background_color = colors.background_color;
       team.text_color = colors.text_color;
