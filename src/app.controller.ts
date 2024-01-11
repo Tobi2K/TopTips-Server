@@ -13,6 +13,8 @@ import { ChangeEmailDto } from './dtos/change-email.dto';
 import { ChangeNameDto } from './dtos/change-name.dto';
 import { LoginDto } from './dtos/login.dto';
 import { RegisterDto } from './dtos/register.dto';
+import { ForgotPasswordDto } from './dtos/forgot-password.dto';
+import { ChangePasswordDto } from './dtos/change-pass.dto';
 
 export const IS_PUBLIC_KEY = 'isPublic';
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
@@ -49,9 +51,20 @@ export class AppController {
     return await this.authService.register(body);
   }
 
+  @Public()
+  @Post('auth/forgot')
+  forgotPassword(@Body() body: ForgotPasswordDto) {
+    return this.authService.forgotPassword(body.name);
+  }
+
   @Post('auth/update')
   async changeEmail(@Body() body: ChangeEmailDto, @Request() req) {
     return await this.authService.changeEmail(body, req.user);
+  }
+
+  @Post('auth/updatePass')
+  async changePassword(@Body() body: ChangePasswordDto, @Request() req) {
+    return await this.authService.changePassword(body, req.user);
   }
 
   @Get('profile')

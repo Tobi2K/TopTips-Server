@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { User } from 'src/database/entities/user.entity';
@@ -7,14 +7,20 @@ import { Connection } from 'typeorm';
 import { RegisterDto } from 'src/dtos/register.dto';
 import { ChangeNameDto } from 'src/dtos/change-name.dto';
 import { ChangeEmailDto } from 'src/dtos/change-email.dto';
+import * as randtoken from 'rand-token';
+import { ChangePasswordDto } from 'src/dtos/change-pass.dto';
 
 @Injectable()
 export class AuthService {
+  private sgMail = require('@sendgrid/mail');
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private connection: Connection,
-  ) {}
+  ) {
+    this.sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  }
 
   async validateUser(name: string, pass: string) {
     const user = await this.usersService.findOne(name);
@@ -89,6 +95,80 @@ export class AuthService {
         }),
       };
     }
+  }
+
+  async forgotPassword(username: string) {
+    const db_user = await this.usersService.findOne(username);
+
+    if (!db_user) {
+      throw new HttpException('User not found!', HttpStatus.NOT_FOUND);
+    }
+
+    if (!db_user.email) {
+      throw new HttpException(
+        'No backup email set! Please contact me at tobias@kalmbach.dev.',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    const new_pass = randtoken.generate(10);
+    const msg = {
+      from: { name: 'TopTips', email: 'tobias@kalmbach.dev' },
+      subject: 'TopTips - Password Reset',
+      personalizations: [
+        {
+          to: [
+            {
+              name: username,
+              email: db_user.email,
+            },
+          ],
+          dynamic_template_data: {
+            name: username,
+            password: new_pass,
+          },
+        },
+      ],
+      template_id: 'd-2804cb14adf44c52b0e02934ece2cdda',
+    };
+    bcrypt.hash(new_pass, 10, (_err, hash) => {
+      this.sgMail
+        .send(msg)
+        .then(() => {
+          this.logger.debug('Email sent');
+          this.connection.getRepository(User).update(db_user, {
+            password: hash,
+          });
+        })
+        .catch((error: any) => {
+          this.logger.error(error);
+          throw new HttpException(
+            'Unable to set your password',
+            HttpStatus.FORBIDDEN,
+          );
+        });
+    });
+  }
+
+  async changePassword(password: ChangePasswordDto, user) {
+    const valid = await this.validateUser(user.username, password.oldPassword);
+
+    if (!valid) {
+      throw new HttpException(
+        'Your password is invalid!',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    const db_user = await this.usersService.findOne(user.username);
+
+    if (!db_user) {
+      throw new HttpException('User not found!', HttpStatus.NOT_FOUND);
+    }
+    bcrypt.hash(password.newPassword, 10, (_err, hash) => {
+      this.connection.getRepository(User).update(db_user, {
+        password: hash,
+      });
+    });
   }
 
   async changeEmail(email: ChangeEmailDto, user) {
