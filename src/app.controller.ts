@@ -15,6 +15,7 @@ import { LoginDto } from './dtos/login.dto';
 import { RegisterDto } from './dtos/register.dto';
 import { ForgotPasswordDto } from './dtos/forgot-password.dto';
 import { ChangePasswordDto } from './dtos/change-pass.dto';
+import { DeleteAccountDto } from './dtos/delete-account.dto';
 
 export const IS_PUBLIC_KEY = 'isPublic';
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
@@ -65,6 +66,11 @@ export class AppController {
   @Post('auth/updatePass')
   async changePassword(@Body() body: ChangePasswordDto, @Request() req) {
     return await this.authService.changePassword(body, req.user);
+  }
+
+  @Post('auth/delete')
+  async deleteAccount(@Body() body: DeleteAccountDto, @Request() req) {
+    return await this.authService.deleteAccount(body.password, req.user);
   }
 
   @Get('profile')

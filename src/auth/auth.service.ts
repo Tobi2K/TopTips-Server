@@ -9,6 +9,10 @@ import { ChangeNameDto } from 'src/dtos/change-name.dto';
 import { ChangeEmailDto } from 'src/dtos/change-email.dto';
 import * as randtoken from 'rand-token';
 import { ChangePasswordDto } from 'src/dtos/change-pass.dto';
+import { Guess } from 'src/database/entities/guess.entity';
+import { Points } from 'src/database/entities/points.entity';
+import { Group } from 'src/database/entities/group.entity';
+import { GroupMembers } from 'src/database/entities/group-members.entity';
 
 @Injectable()
 export class AuthService {
@@ -169,6 +173,166 @@ export class AuthService {
         password: hash,
       });
     });
+  }
+
+  async deleteAccount(password: string, user) {
+    const valid = await this.validateUser(user.username, password);
+
+    if (!valid) {
+      throw new HttpException(
+        'Your password is invalid!',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    const db_user = await this.usersService.findOne(user.username);
+
+    if (!db_user) {
+      throw new HttpException('User not found!', HttpStatus.NOT_FOUND);
+    }
+
+    // First delete points, then guesses
+    const toDeletePoints = await this.connection.getRepository(Points).find({
+      where: {
+        user: db_user,
+      },
+    });
+
+    await this.connection.getRepository(Points).remove(toDeletePoints);
+
+    const toDeleteGuesses = await this.connection.getRepository(Guess).find({
+      where: {
+        user: db_user,
+      },
+    });
+    await this.connection.getRepository(Guess).remove(toDeleteGuesses);
+
+    // Then delete groups & memberships
+    const groups = await this.connection.getRepository(Group).find({
+      where: { owner: db_user },
+    });
+
+    const groupRepository = this.connection.getRepository(Group);
+
+    for (let i = 0; i < groups.length; i++) {
+      const db = db_user;
+      const group_id = groups[i].id;
+      if (db) {
+        const dbgroup = await groupRepository.findOne({
+          where: { id: group_id },
+        });
+
+        if (dbgroup) {
+          if (dbgroup.owner.id != db.id) {
+            continue;
+          }
+          const toDeletePoints = await this.connection
+            .getRepository(Points)
+            .find({
+              where: {
+                group: dbgroup,
+              },
+            });
+          await this.connection.getRepository(Points).remove(toDeletePoints);
+
+          const toDeleteGuesses = await this.connection
+            .getRepository(Guess)
+            .find({
+              where: {
+                group: dbgroup,
+              },
+            });
+          await this.connection.getRepository(Guess).remove(toDeleteGuesses);
+
+          const toDeleteGroupMember = await this.connection
+            .getRepository(GroupMembers)
+            .find({
+              where: {
+                group: dbgroup,
+              },
+            });
+          await this.connection
+            .getRepository(GroupMembers)
+            .remove(toDeleteGroupMember);
+
+          await this.connection.getRepository(Group).remove(dbgroup);
+        } else {
+          throw new HttpException(
+            'The requested group was not found.',
+            HttpStatus.NOT_FOUND,
+          );
+        }
+      } else {
+        throw new HttpException(
+          'You are not allowed to do that!',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+    }
+
+    const userGroups = await this.connection.getRepository(GroupMembers).find({
+      where: { user: db_user },
+    });
+
+    for (let i = 0; i < userGroups.length; i++) {
+      const db = db_user;
+      const group_id = userGroups[i].group.id;
+      if (db) {
+        const dbgroup = await groupRepository.findOne({
+          where: { id: group_id },
+        });
+
+        if (dbgroup) {
+          if (dbgroup.owner.id == db.id) {
+            continue;
+          }
+          const toDeletePoints = await this.connection
+            .getRepository(Points)
+            .find({
+              where: {
+                user: db,
+                group: dbgroup,
+              },
+            });
+          await this.connection.getRepository(Points).remove(toDeletePoints);
+
+          const toDeleteGuesses = await this.connection
+            .getRepository(Guess)
+            .find({
+              where: {
+                user: db,
+                group: dbgroup,
+              },
+            });
+          await this.connection.getRepository(Guess).remove(toDeleteGuesses);
+
+          const toDeleteGroupMember = await this.connection
+            .getRepository(GroupMembers)
+            .find({
+              where: {
+                user: db,
+                group: dbgroup,
+              },
+            });
+          await this.connection
+            .getRepository(GroupMembers)
+            .remove(toDeleteGroupMember);
+        } else {
+          throw new HttpException(
+            'The requested group was not found.',
+            HttpStatus.NOT_FOUND,
+          );
+        }
+      } else {
+        throw new HttpException(
+          'You are not allowed to do that!',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+    }
+
+    // Delete account
+    this.usersService.deleteUser(db_user);
   }
 
   async changeEmail(email: ChangeEmailDto, user) {

@@ -21,4 +21,8 @@ export class UsersService {
   addUser(x: User) {
     this.userRepository.save(x);
   }
+
+  deleteUser(db_user: User) {
+    this.userRepository.delete(db_user);
+  }
 }
