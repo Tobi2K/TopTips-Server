@@ -102,6 +102,7 @@ export class AuthService {
   }
 
   async forgotPassword(username: string) {
+    this.logger.debug('Resetting password for ' + username);
     const db_user = await this.usersService.findOne(username);
 
     if (!db_user) {
@@ -154,6 +155,7 @@ export class AuthService {
   }
 
   async changePassword(password: ChangePasswordDto, user) {
+    this.logger.debug('Changing password for ' + user.username);
     const valid = await this.validateUser(user.username, password.oldPassword);
 
     if (!valid) {
@@ -176,6 +178,7 @@ export class AuthService {
   }
 
   async deleteAccount(password: string, user) {
+    this.logger.debug('Attempting deletion of the user ' + user.username);
     const valid = await this.validateUser(user.username, password);
 
     if (!valid) {
@@ -192,6 +195,7 @@ export class AuthService {
     }
 
     // First delete points, then guesses
+    this.logger.debug('Deleting points for ' + user.username);
     const toDeletePoints = await this.connection.getRepository(Points).find({
       where: {
         user: db_user,
@@ -200,6 +204,7 @@ export class AuthService {
 
     await this.connection.getRepository(Points).remove(toDeletePoints);
 
+    this.logger.debug('Deleting guesses for ' + user.username);
     const toDeleteGuesses = await this.connection.getRepository(Guess).find({
       where: {
         user: db_user,
@@ -208,6 +213,7 @@ export class AuthService {
     await this.connection.getRepository(Guess).remove(toDeleteGuesses);
 
     // Then delete groups & memberships
+    this.logger.debug('Deleting groups owned by ' + user.username);
     const groups = await this.connection.getRepository(Group).find({
       where: { owner: db_user },
     });
@@ -270,6 +276,7 @@ export class AuthService {
       }
     }
 
+    this.logger.debug('Deleting group memberships for ' + user.username);
     const userGroups = await this.connection.getRepository(GroupMembers).find({
       where: { user: db_user },
     });
@@ -332,10 +339,12 @@ export class AuthService {
     }
 
     // Delete account
+    this.logger.debug('Deleting user ' + user.username);
     this.usersService.deleteUser(db_user);
   }
 
   async changeEmail(email: ChangeEmailDto, user) {
+    this.logger.debug('Changing email for ' + user.username);
     const db_name = await this.usersService.findOne(user.username);
 
     const db_email = await this.connection.getRepository(User).findOne({
