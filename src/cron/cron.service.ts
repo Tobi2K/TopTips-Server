@@ -812,9 +812,25 @@ export class CronService {
           season.id,
         );
 
+        let team_name = team.name;
+
+        // Hot fix for European Championship
+        if (
+          ['177'].includes(season.competition.competition_id) &&
+          element.league &&
+          element.league.type == 'cup'
+        ) {
+          team_name +=
+            ' (' +
+            element.stage.split(' - ')[1] +
+            ' - ' +
+            element.group.name +
+            ')';
+        }
+
         ranking.push(
           new TeamDetails(
-            team.name,
+            team_name,
             team.id,
             element.position,
             element.games.win.total,
