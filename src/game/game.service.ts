@@ -74,10 +74,17 @@ export class GameService {
   }
 
   async getGamedayFormatted(day: Game, user: User, group: Group) {
-    const games = await this.gameRepository.find({
+    let games = await this.gameRepository.find({
       where: { gameday: day.gameday, season: day.season },
       order: { date: 'ASC' },
     });
+
+    if (games.length > 10) {
+      games = await this.gameRepository.find({
+        where: { gameday: day.gameday, season: day.season },
+        order: { completed: 'ASC', date: 'ASC' },
+      });
+    }
 
     const guesses = await this.connection.getRepository(Guess).find({
       where: {
