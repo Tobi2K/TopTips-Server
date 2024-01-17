@@ -785,11 +785,18 @@ export class CronService {
         season: season.season_id,
       };
 
-      const data = (
+      const raw_data = (
         await this.httpService
           .get('https://api-handball.p.rapidapi.com/standings', x)
           .toPromise()
-      ).data.response[0];
+      ).data.response;
+
+      let data = raw_data[0];
+
+      // Hot fix for European Championship
+      if (['177'].includes(season.competition.competition_id)) {
+        data = raw_data[1];
+      }
 
       data.sort(
         (a: { position: number }, b: { position: number }) =>
@@ -820,12 +827,11 @@ export class CronService {
           element.league &&
           element.league.type == 'cup'
         ) {
-          team_name +=
-            ' (' +
-            element.stage.split(' - ')[1] +
-            ' - ' +
-            element.group.name +
-            ')';
+          let stage = element.stage.split(' - ')[1];
+          if (stage == 'Regular Season') {
+            stage = 'Main Round';
+          }
+          team_name += ' (' + stage + ' - ' + element.group.name + ')';
         }
 
         ranking.push(
