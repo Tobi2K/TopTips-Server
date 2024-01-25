@@ -455,7 +455,7 @@ export class CronService {
     return team;
   }
 
-  @Cron('0 0,13,16-22 * * *', { name: 'sync-important-games' }) // At minute 0 past every hour from 16 through 22. Also at midnight and 10 AM => 9 times daily per important season
+  @Cron('0 0,16-22 * * *', { name: 'sync-important-games' }) // At minute 0 past every hour from 16 through 22. Also at midnight and 10 AM => 9 times daily per important season
   async syncImportantGames() {
     if (this.configService.get<string>('CRON') != 'enabled') {
       this.logger.debug('Cron jobs are not enabled!');
