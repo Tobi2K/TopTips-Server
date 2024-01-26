@@ -95,9 +95,17 @@ export class CronService {
       this.logger.debug('There are games today');
       days = 'Gamedays: ';
       for (let i = 0; i < gamedays.length - 1; i++) {
-        days += gamedays[i] + ', ';
+        if (gamedays[i] == -1) {
+          days += 'Playoffs, ';
+        } else {
+          days += gamedays[i] + ', ';
+        }
       }
-      days += gamedays[gamedays.length - 1];
+      if (gamedays[gamedays.length - 1] == -1) {
+        days += 'Playoffs';
+      } else {
+        days += gamedays[gamedays.length - 1];
+      }
     }
 
     const topic = 'season' + id;
