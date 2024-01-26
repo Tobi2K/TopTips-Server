@@ -689,6 +689,9 @@ export class CronService {
     const allActiveSeasons = unimportantSeasons.concat(importantSeasons);
 
     allActiveSeasons.forEach(async (season) => {
+      if (season.id == 1685) {
+        return;
+      }
       const lastGameday = await this.getLastGameday(season);
 
       let currentGameday = 1;
