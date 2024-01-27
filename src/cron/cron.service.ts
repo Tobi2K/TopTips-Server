@@ -234,7 +234,9 @@ export class CronService {
   }
 
   async syncPoints(data: any[]) {
-    const scores = data.filter((e) => ['FT'].includes(e.status.short));
+    const scores = data.filter((e) =>
+      ['FT', 'AET', 'AP'].includes(e.status.short),
+    );
 
     const gamedaySet: number[] = [];
     const gameSet: Game[] = [];
