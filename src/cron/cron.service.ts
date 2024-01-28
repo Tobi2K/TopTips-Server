@@ -415,9 +415,16 @@ export class CronService {
       this.logger.debug('Cron jobs are not enabled!');
       return;
     }
+
+    let tmp_gameday: any = game.gameday;
+
+    if (tmp_gameday == -1) {
+      tmp_gameday = 'Playoffs';
+    }
+
     const message = {
       notification: {
-        title: game.season.name + ' gameday ' + game.gameday + ' is over.',
+        title: game.season.name + ' gameday ' + tmp_gameday + ' is over.',
         body: 'How did ' + groupName + ' perform this gameday?\n\n' + standings,
       },
       android: {
