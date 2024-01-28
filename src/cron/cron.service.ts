@@ -90,7 +90,11 @@ export class CronService {
       return;
     } else if (gamedays.length == 1) {
       this.logger.debug('There is a game today');
-      days = 'Gameday: ' + gamedays[0];
+      if (gamedays[0] == -1) {
+        days = 'Gameday: Playoffs';
+      } else {
+        days = 'Gameday: ' + gamedays[0];
+      }
     } else if (gamedays.length > 1) {
       this.logger.debug('There are games today');
       days = 'Gamedays: ';
