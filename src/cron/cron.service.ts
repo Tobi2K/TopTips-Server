@@ -737,10 +737,11 @@ export class CronService {
           break;
         }
       }
-
-      this.connection.getRepository(Season).update(season, {
-        current_gameday: currentGameday,
-      });
+      if (season.current_gameday < currentGameday) {
+        this.connection.getRepository(Season).update(season, {
+          current_gameday: currentGameday,
+        });
+      }
     });
   }
 
