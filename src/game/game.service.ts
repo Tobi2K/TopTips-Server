@@ -251,7 +251,7 @@ export class GameService {
           },
         )
         .select([
-          'AVG(score_team1) goals_avg, MAX(score_team1) goals_max, MIN(score_team1) goals_min',
+          'AVG(score_team1) goals_avg, MAX(score_team1) goals_max, MIN(score_team1) goals_min, SUM(score_team1) goals_for, SUM(score_team2) goals_against',
         ])
         .getRawOne();
 
@@ -266,13 +266,15 @@ export class GameService {
           },
         )
         .select([
-          'AVG(score_team2) goals_avg, MAX(score_team2) goals_max, MIN(score_team2) goals_min',
+          'AVG(score_team2) goals_avg, MAX(score_team2) goals_max, MIN(score_team2) goals_min, SUM(score_team2) goals_for, SUM(score_team1) goals_against',
         ])
         .getRawOne();
 
       let avg_goals;
       let max_goals;
       let min_goals;
+      let goals_for;
+      let goals_against;
 
       if (goals_team1.goals_avg & goals_team2.goals_avg) {
         avg_goals = (
@@ -307,7 +309,29 @@ export class GameService {
         max_goals = '-';
       }
 
-      return { avg_goals, min_goals, max_goals };
+      if (goals_team1.goals_for & goals_team2.goals_for) {
+        goals_for =
+          Number(goals_team1.goals_for) + Number(goals_team2.goals_for);
+      } else if (goals_team1.goals_for) {
+        goals_for = Number(goals_team1.goals_for);
+      } else if (goals_team2.goals_for) {
+        goals_for = Number(goals_team2.goals_for);
+      } else {
+        goals_for = '-';
+      }
+
+      if (goals_team1.goals_against & goals_team2.goals_against) {
+        goals_against =
+          Number(goals_team1.goals_against) + Number(goals_team2.goals_against);
+      } else if (goals_team1.goals_against) {
+        goals_against = Number(goals_team1.goals_against);
+      } else if (goals_team2.goals_against) {
+        goals_against = Number(goals_team2.goals_against);
+      } else {
+        goals_against = '-';
+      }
+
+      return { avg_goals, min_goals, max_goals, goals_for, goals_against };
     } else {
       return null;
     }

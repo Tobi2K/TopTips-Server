@@ -802,6 +802,7 @@ export class CronService {
 
     for (let i = 0; i < importantSeasons.length; i++) {
       const season = importantSeasons[i];
+      this.logger.debug(' > for ' + season.name);
 
       const x = options as any;
 
@@ -867,8 +868,8 @@ export class CronService {
             element.games.win.total,
             element.games.draw.total,
             element.games.lose.total,
-            element.goals.for,
-            element.goals.against,
+            goal_stats?.goals_for,
+            goal_stats?.goals_against,
             goal_stats?.max_goals,
             goal_stats?.min_goals,
             goal_stats?.avg_goals,
