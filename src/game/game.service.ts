@@ -276,7 +276,7 @@ export class GameService {
       let goals_for;
       let goals_against;
 
-      if (goals_team1.goals_avg & goals_team2.goals_avg) {
+      if (goals_team1.goals_avg && goals_team2.goals_avg) {
         avg_goals = (
           (Number(goals_team1.goals_avg) + Number(goals_team2.goals_avg)) /
           2
@@ -289,7 +289,7 @@ export class GameService {
         avg_goals = '-';
       }
 
-      if (goals_team1.goals_min & goals_team2.goals_min) {
+      if (goals_team1.goals_min && goals_team2.goals_min) {
         min_goals = Math.min(goals_team1.goals_min, goals_team2.goals_min);
       } else if (goals_team1.goals_min) {
         min_goals = goals_team1.goals_min;
@@ -299,7 +299,7 @@ export class GameService {
         min_goals = '-';
       }
 
-      if (goals_team1.goals_max & goals_team2.goals_max) {
+      if (goals_team1.goals_max && goals_team2.goals_max) {
         max_goals = Math.max(goals_team1.goals_max, goals_team2.goals_max);
       } else if (goals_team1.goals_max) {
         max_goals = goals_team1.goals_max;
@@ -309,7 +309,7 @@ export class GameService {
         max_goals = '-';
       }
 
-      if (goals_team1.goals_for & goals_team2.goals_for) {
+      if (goals_team1.goals_for && goals_team2.goals_for) {
         goals_for =
           Number(goals_team1.goals_for) + Number(goals_team2.goals_for);
       } else if (goals_team1.goals_for) {
@@ -320,7 +320,7 @@ export class GameService {
         goals_for = '-';
       }
 
-      if (goals_team1.goals_against & goals_team2.goals_against) {
+      if (goals_team1.goals_against && goals_team2.goals_against) {
         goals_against =
           Number(goals_team1.goals_against) + Number(goals_team2.goals_against);
       } else if (goals_team1.goals_against) {
