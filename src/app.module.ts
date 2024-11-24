@@ -26,6 +26,8 @@ import { Season } from './database/entities/season.entity';
 import { CompetitionModule } from './competition/competition.module';
 import { StandingModule } from './standing/standing.module';
 import { Standing } from './database/entities/standing.entity';
+import { EmailModule } from './email/email.module';
+import { EmailNotify } from './database/entities/email-notify.entity';
 
 @Module({
   imports: [
@@ -47,6 +49,7 @@ import { Standing } from './database/entities/standing.entity';
         Competition,
         Season,
         Standing,
+        EmailNotify
       ],
       namingStrategy: new SnakeNamingStrategy(),
       synchronize: true,
@@ -62,6 +65,7 @@ import { Standing } from './database/entities/standing.entity';
     GroupModule,
     CompetitionModule,
     StandingModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [
