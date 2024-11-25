@@ -48,7 +48,7 @@ export class PointsService {
 
       for (let i = 0; i < guesses.length; i++) {
         const userGuess = guesses[i];
-        const points = this.calculatePoints(game, userGuess);
+        const [points, perfect] = this.calculatePoints(game, userGuess);
 
         const existingPoints = await this.connection
           .getRepository(Points)
@@ -56,7 +56,7 @@ export class PointsService {
             where: { game: game, group: userGuess.group, user: userGuess.user },
           });
 
-        if (existingPoints) {
+        if (existingPoints) {          
           await this.pointRepository.update(
             {
               game: game,
@@ -68,6 +68,9 @@ export class PointsService {
             },
           );
         } else {
+          if (perfect) {
+            this.notifyPerfectGuess(game, userGuess);
+          }
           const point = new Points();
           point.game = game;
           point.group = userGuess.group;
@@ -79,7 +82,8 @@ export class PointsService {
     }
   }
 
-  calculatePoints(game: Game, guess: Guess): number {
+  calculatePoints(game: Game, guess: Guess): [number, boolean] {
+    let perfect = false;
     let points = 0;
     const guess_t1 = guess.score_team1;
     const guess_t2 = guess.score_team2;
@@ -98,9 +102,10 @@ export class PointsService {
     if (guess_t2 == actual_t2) points++;
     if (guess_winner == actual_winner) points++;
     if (guess_dif == actual_dif) points++;
+    // Everything perfect
     if (points == 4) {
       points++;
-      this.notifyPerfectGuess(game, guess);
+      perfect = true;
     }
 
     // guess predicted draw correctly
@@ -109,11 +114,11 @@ export class PointsService {
       // draw predicted perfectly
       if (guess_t1 == actual_t1 && guess_t2 == actual_t2) {
         points++;
-        this.notifyPerfectGuess(game, guess);
+        perfect = true;
       }
     }
 
-    return points;
+    return [points, perfect];
   }
 
   async getPointsFormatted(groupID: number, user: { username: any }) {
@@ -325,7 +330,7 @@ export class PointsService {
   async notifyPerfectGuess(game: Game, guess: Guess) {
     if (this.configService.get<string>('CRON') != 'enabled') {
       this.logger.debug('Cron jobs are not enabled!');
-      // return;
+      return;
     }
 
     const group = guess.group
