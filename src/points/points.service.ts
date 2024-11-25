@@ -4,7 +4,10 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  Logger,
 } from '@nestjs/common';
+import * as admin from 'firebase-admin';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Game } from 'src/database/entities/game.entity';
 import { GroupMembers } from 'src/database/entities/group-members.entity';
@@ -18,6 +21,7 @@ import { Connection, Repository } from 'typeorm';
 
 @Injectable()
 export class PointsService {
+  private readonly logger = new Logger(PointsService.name);
   constructor(
     @InjectRepository(Points)
     private pointRepository: Repository<Points>,
@@ -27,7 +31,9 @@ export class PointsService {
     @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
     private connection: Connection,
-  ) {}
+    @Inject(forwardRef(() => ConfigService))
+    private configService: ConfigService,
+  ) { }
 
   async calculateGamePoints(game_id: number) {
     const game: Game = await this.connection.getRepository(Game).findOne({
@@ -92,13 +98,19 @@ export class PointsService {
     if (guess_t2 == actual_t2) points++;
     if (guess_winner == actual_winner) points++;
     if (guess_dif == actual_dif) points++;
-    if (points == 4) points++;
+    if (points == 4) {
+      points++;
+      this.notifyPerfectGuess(game, guess);
+    }
 
     // guess predicted draw correctly
     if (guess_winner == 0 && actual_winner == 0) {
       points++;
       // draw predicted perfectly
-      if (guess_t1 == actual_t1 && guess_t2 == actual_t2) points++;
+      if (guess_t1 == actual_t1 && guess_t2 == actual_t2) {
+        points++;
+        this.notifyPerfectGuess(game, guess);
+      }
     }
 
     return points;
@@ -308,5 +320,47 @@ export class PointsService {
         return 'N/A';
       }
     }
+  }
+
+  async notifyPerfectGuess(game: Game, guess: Guess) {
+    if (this.configService.get<string>('CRON') != 'enabled') {
+      this.logger.debug('Cron jobs are not enabled!');
+      // return;
+    }
+
+    const group = guess.group
+    const user = guess.user
+
+    const message = {
+      notification: {
+        title: user.name + ' guessed perfectly!',
+        body: game.team1.name + ' vs. ' + game.team2.name + ', ' + game.score_team1 + ' - ' + game.score_team2 + " (Group: " + group.name + ")",
+      },
+      android: {
+        priority: 'high' as any,
+        notification: {
+          priority: 'max' as any,
+          channelId: 'General',
+        },
+      },
+      topic: 'group' + group.id,
+    };
+
+    admin
+      .messaging()
+      .send(message)
+      .then(() => {
+        // Response is a message ID string.
+        this.logger.debug(
+          'Successfully sent perfect guess message for ' +
+          group.name +
+          ' (id: ' +
+          group.id +
+          ') ' + message.notification.title + ' --- ' + message.notification.body,
+        );
+      })
+      .catch((error) => {
+        this.logger.error('Error sending message:', error);
+      });
   }
 }
