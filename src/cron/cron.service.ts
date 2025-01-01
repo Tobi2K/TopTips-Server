@@ -177,6 +177,10 @@ export class CronService {
 
     for (let i = 0; i < data.length; i++) {
       const game = data[i];
+      // DIRTY FIX FOR WORLD CHAMPIONSHIP 2025 --> Games for World cup since 2021 are all combined into a single competition, so we split only the games after Jan. 1st 2025
+      if (new_season.id == 1075 && this.moment("2025-01-01") > this.moment(game.date)) {
+        continue
+      }
       const new_eventID = game.id;
       let new_gameday = game.week;
       let new_stage = game.week;
