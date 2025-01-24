@@ -23,7 +23,7 @@
     "@nestjs/jwt": "^10.2.0",
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.4.8",
-    "@nestjs/schedule": "^4.1.0",
+    "@nestjs/schedule": "^5.0.0",
     "@nestjs/swagger": "^8.0.1",
     "@nestjs/typeorm": "^10.0.2",
     "@sendgrid/mail": "^8.1.4",
