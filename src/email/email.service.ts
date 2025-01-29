@@ -184,14 +184,26 @@ export class EmailService {
       return;
     } else if (gamedays.length == 1) {
       this.logger.debug('There is a game');
-      days = 'Gameday: ' + gamedays[0];
+      if (gamedays[0] == -1) {
+        days = 'Gameday: Playoffs'
+      } else {
+        days = 'Gameday: ' + gamedays[0];
+      }
     } else if (gamedays.length > 1) {
       this.logger.debug('There are games');
       days = 'Gamedays: ';
       for (let i = 0; i < gamedays.length - 1; i++) {
-        days += gamedays[i] + ', ';
+        if (gamedays[i] == -1) {
+          days += 'Playoffs, ';
+        } else {
+          days += gamedays[i] + ', ';
+        }
       }
-      days += gamedays[gamedays.length - 1];
+      if (gamedays[gamedays.length - 1] == -1) {
+        days += "Playoffs";
+      } else {
+        days += gamedays[gamedays.length - 1];
+      }
     }
 
     const recepients = [];
