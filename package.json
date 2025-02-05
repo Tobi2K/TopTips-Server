@@ -42,7 +42,7 @@
     "typeorm-naming-strategies": "^4.1.0"
   },
   "devDependencies": {
-    "@nestjs/cli": "^10.4.7",
+    "@nestjs/cli": "^11.0.2",
     "@types/bcrypt": "^5.0.2",
     "@types/node": "^22.9.0",
     "@types/passport-jwt": "^4.0.1",
