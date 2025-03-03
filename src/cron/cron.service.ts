@@ -766,7 +766,7 @@ export class CronService {
     };
   }
 
-  @Cron('35 8 * * *', { name: 'sync-standing' })
+  @Cron('0 4 * * *', { name: 'sync-standing' })
   async syncStanding() {
     if (this.configService.get<string>('CRON') != 'enabled') {
       this.logger.debug('Cron jobs are not enabled!');
@@ -871,6 +871,7 @@ export class CronService {
         this.connection.getRepository(Standing).save(stand);
       }
 
+      this.logger.debug('    > ' + season.name + ' done');
       await new Promise((res) => setTimeout(res, 6000));
     }
   }
