@@ -11,7 +11,7 @@ export class TeamDetails {
   goals_min: number;
   goals_avg: number;
   points: number;
-  history: string;
+  history: {result: string, scores_home_team: Number[], scores_away_team: Number[], other_team_name: string[]};
 
   constructor(
     name?: string,
@@ -26,7 +26,7 @@ export class TeamDetails {
     goals_min?: number,
     goals_avg?: number,
     points?: number,
-    history?: string,
+    history?: {result: string, scores_home_team: Number[], scores_away_team: Number[], other_team_name: string[]},
   ) {
     this.name = name;
     this.team_id = team_id;

@@ -17,11 +17,6 @@ export class CronController {
     return this.cronService.syncImportantGames();
   }
 
-  @Get('sync/games/secondary')
-  syncUnimportantGames() {
-    return this.cronService.syncUnimportantGames();
-  }
-
   @Get('notify')
   handleNotifications() {
     return this.cronService.handleNotifications();

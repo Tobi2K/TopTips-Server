@@ -47,9 +47,7 @@ export class CronService {
     }
     this.logger.debug('Checking for games today');
 
-    const unimportantSeasons = await this.getActiveSeasons(0);
-    const importantSeasons = await this.getActiveSeasons(1);
-    const allActiveSeasons = unimportantSeasons.concat(importantSeasons);
+    const allActiveSeasons = await this.getActiveSeasons(1);
 
     allActiveSeasons.forEach(async (season) => {
       const dbseason = await this.connection
@@ -476,7 +474,7 @@ export class CronService {
     return team;
   }
 
-  @Cron('0 0,12,16-22 * * *', { name: 'sync-important-games' }) // At minute 0 past every hour from 16 through 22. Also at midnight and 10 AM => 9 times daily per important season
+  @Cron('0,30 0,12,16-23 * * *', { name: 'sync-important-games' }) // At minute 0 past hour 0, 12, and every hour from 16 through 23. => 10 times daily per important season
   async syncImportantGames() {
     if (this.configService.get<string>('CRON') != 'enabled') {
       this.logger.debug('Cron jobs are not enabled!');
@@ -518,37 +516,6 @@ export class CronService {
     }
   }
 
-  @Cron('0 2 * * 1', { name: 'sync-unimportant-games' })
-  async syncUnimportantGames() {
-    if (this.configService.get<string>('CRON') != 'enabled') {
-      this.logger.debug('Cron jobs are not enabled!');
-      return;
-    }
-    this.logger.debug('Syncing unimportant games and scores...');
-
-    const seasons = await this.getActiveSeasons(0);
-    for (let i = 0; i < seasons.length; i++) {
-      const season = seasons[i];
-      const x = options as any;
-      x.params = {
-        league: season.competition.competition_id,
-        season: season.season_id,
-      };
-
-      const data = (
-        await this.httpService
-          .get('https://api-handball.p.rapidapi.com/games', x)
-          .toPromise()
-      ).data.response;
-
-      await this.syncGames(data, season);
-
-      this.syncPoints(data);
-
-      await new Promise((res) => setTimeout(res, 6000));
-    }
-  }
-
   async syncGamesForNewGroup(season: Season) {
     const gameRepository = this.connection.getRepository(Game);
     const db = await gameRepository.findOne({
@@ -576,7 +543,7 @@ export class CronService {
     }
   }
 
-  @Cron('0 3 1 * *', { name: 'sync-leagues' }) // At 03:00 on day-of-month 1. => 1 time monthly (not per season)
+  @Cron('0 3 * * 1', { name: 'sync-leagues' }) // At 03:00 on Monday. => 1 time weekly (not per season)
   async syncLeagues() {
     if (this.configService.get<string>('CRON') != 'enabled') {
       this.logger.debug('Cron jobs are not enabled!');
@@ -643,21 +610,22 @@ export class CronService {
         } else {
           db.current = season.current;
           db.name = comp.name + ' ' + season.season;
+          if (this.moment(db.end_date).add(1, 'days') < this.moment().startOf('day')) {
+            db.important = 0
+          }
           seasonRepository.save(db);
         }
       },
     );
   }
 
-  @Cron('0 5 1 * *', { name: 'sync-teams' }) // At 05:00 on day-of-month 1. => 1 time monthly per season
+  @Cron('0 5 * * 1', { name: 'sync-teams' }) // At 05:00 on Monday. => 1 time per week per season
   async syncTeams() {
     if (this.configService.get<string>('CRON') != 'enabled') {
       this.logger.debug('Cron jobs are not enabled!');
       return;
     }
-    const unimportantSeasons = await this.getActiveSeasons(0);
-    const importantSeasons = await this.getActiveSeasons(1);
-    const allActiveSeasons = unimportantSeasons.concat(importantSeasons);
+    const allActiveSeasons = await this.getActiveSeasons(1);
 
     const teamRepository = this.connection.getRepository(Team);
 
@@ -708,9 +676,7 @@ export class CronService {
 
   @Cron('0 6 * * *', { name: 'sync-current-gameday' })
   async syncCurrentGameday() {
-    const unimportantSeasons = await this.getActiveSeasons(0);
-    const importantSeasons = await this.getActiveSeasons(1);
-    const allActiveSeasons = unimportantSeasons.concat(importantSeasons);
+    const allActiveSeasons = await this.getActiveSeasons(1);
 
     allActiveSeasons.forEach(async (season) => {
       if (season.id == 1685) {
@@ -909,7 +875,7 @@ export class CronService {
     }
   }
 
-  async generateHistory(team_id: number, season_id: number): Promise<string> {
+  async generateHistory(team_id: number, season_id: number): Promise<{result: string, scores_home_team: Number[], scores_away_team: Number[], other_team_name: string[]}> {
     const games = await this.gameRepository
       .createQueryBuilder('game')
       .innerJoinAndSelect('game.team1', 'team1')
@@ -924,25 +890,37 @@ export class CronService {
       .orderBy('game.date', 'DESC')
       .limit(5)
       .getMany();
-
-    let history_string = '';
+    
+    let history_string = {
+      result: '',
+      scores_home_team: [],
+      scores_away_team: [],
+      other_team_name: [],
+    };
     for (let i = 0; i < games.length; i++) {
       const game = games[i];
       const team1 = team_id == game.team1.id;
+      history_string.scores_home_team.push(game.score_team1);
+      history_string.scores_away_team.push(game.score_team2);
+      if (team1) {
+        history_string.other_team_name.push(game.team2.name);
+      } else {
+        history_string.other_team_name.push(game.team1.name);
+      }
       if (game.score_team1 > game.score_team2) {
         if (team1) {
-          history_string += 'W';
+          history_string.result += 'W';
         } else {
-          history_string += 'L';
+          history_string.result += 'L';
         }
       } else if (game.score_team1 < game.score_team2) {
         if (team1) {
-          history_string += 'L';
+          history_string.result += 'L';
         } else {
-          history_string += 'W';
+          history_string.result += 'W';
         }
       } else {
-        history_string += 'D';
+        history_string.result += 'D';
       }
     }
     return history_string;
