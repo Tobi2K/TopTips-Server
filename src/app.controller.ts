@@ -16,6 +16,7 @@ import { RegisterDto } from './dtos/register.dto';
 import { ForgotPasswordDto } from './dtos/forgot-password.dto';
 import { ChangePasswordDto } from './dtos/change-pass.dto';
 import { DeleteAccountDto } from './dtos/delete-account.dto';
+import { PatchNotesDto } from './dtos/patch-notes.dto';
 
 export const IS_PUBLIC_KEY = 'isPublic';
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
@@ -38,6 +39,11 @@ export class AppController {
   @Get('version')
   getVersion() {
     return this.appService.getVersion();
+  }
+
+  @Post('patches')
+  async getPatchNotes(@Body() body: PatchNotesDto, @Request() req) {
+    return await this.appService.getPatchNotes(body.appVersion, req.user);
   }
 
   @Public()

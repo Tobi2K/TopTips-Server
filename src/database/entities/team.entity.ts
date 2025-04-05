@@ -14,6 +14,9 @@ export class Team {
   @Column()
   abbreviation: string;
 
+  @Column()
+  short_name: string;
+
   @Column({ default: '#FFFFFF' })
   background_color: string;
 

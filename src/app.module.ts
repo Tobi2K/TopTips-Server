@@ -28,6 +28,7 @@ import { StandingModule } from './standing/standing.module';
 import { Standing } from './database/entities/standing.entity';
 import { EmailModule } from './email/email.module';
 import { EmailNotify } from './database/entities/email-notify.entity';
+import { PatchNotes } from './database/entities/patch-notes.entity';
 
 @Module({
   imports: [
@@ -49,7 +50,8 @@ import { EmailNotify } from './database/entities/email-notify.entity';
         Competition,
         Season,
         Standing,
-        EmailNotify
+        EmailNotify,
+        PatchNotes,
       ],
       namingStrategy: new SnakeNamingStrategy(),
       synchronize: true,

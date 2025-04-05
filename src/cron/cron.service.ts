@@ -465,6 +465,9 @@ export class CronService {
       team.competitor_id = competitor.id;
       team.name = competitor.name;
       team.abbreviation = competitor.name.slice(0, 3).toString().toUpperCase();
+      team.short_name = competitor.name.split(" ").filter((val: string) => {
+        return val.length > 2 && !/[!@#$%^&*()_+=\[\]{};':"\\|,<>?]+/.test(val)
+      }).at(-1) ?? competitor.name
       const colors = this.generateColors(competitor.id + competitor.name);
       team.background_color = colors.background_color;
       team.text_color = colors.text_color;
@@ -664,6 +667,9 @@ export class CronService {
         team.competitor_id = e.id;
         team.name = e.name;
         team.abbreviation = e.name.slice(0, 3).toString().toUpperCase();
+        team.short_name = e.name.split(" ").filter((val: string) => {
+          return val.length > 2 && !/[!@#$%^&*()_+=\[\]{};':"\\|,<>?]+/.test(val)
+        }).at(-1) ?? e.name
         const colors = this.generateColors(e.id + e.name);
         team.background_color = colors.background_color;
         team.text_color = colors.text_color;
