@@ -36,7 +36,7 @@ export class AppService {
         }
       });
 
-      // "2.9.5" is the first version in patch notes
+      // "2.9.4" is the first version in patch notes
       let lastVersion = dbuser.last_seen_version
       if (!lastVersion) {
         lastVersion = "2.9.4"
@@ -58,7 +58,7 @@ export class AppService {
         )
         .getMany();
       
-      await this.connection.getRepository(User).update(dbuser, {
+      this.connection.getRepository(User).update(dbuser, {
         last_seen_version: versionNumber
       })
         
