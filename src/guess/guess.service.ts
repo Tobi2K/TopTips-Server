@@ -215,11 +215,7 @@ export class GuessService {
         // game guesses are not locked in yet
         guess_string = 'hidden';
       } else {
-        if (val.score_team1 == 0 && val.score_team2 == 0) {
-          guess_string = '-';
-        } else {
-          guess_string = val.score_team1 + ' : ' + val.score_team2;
-        }
+        guess_string = val.score_team1 + ' : ' + val.score_team2;
         if (dbpoints) {
           points = dbpoints.points;
         } else {
