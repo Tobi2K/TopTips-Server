@@ -213,11 +213,7 @@ export class GuessService {
 
       if (this.moment(dbgame.date) > this.moment() || dbgame.postponed) {
         // game guesses are not locked in yet
-        if (val.score_team1 == 0 && val.score_team2 == 0) {
-          guess_string = '-';
-        } else {
-          guess_string = 'hidden';
-        }
+        guess_string = 'hidden';
       } else {
         if (val.score_team1 == 0 && val.score_team2 == 0) {
           guess_string = '-';
