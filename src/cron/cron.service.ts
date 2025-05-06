@@ -519,7 +519,7 @@ export class CronService {
     }
   }
 
-  @Cron('52 11 * * *', { name: 'sync-bundesliga' })
+  @Cron('05 12 * * *', { name: 'sync-bundesliga' })
   async syncBundesiga() {
     const ids = [220, 217];
     for (let i = 0; i < ids.length; i++) {
