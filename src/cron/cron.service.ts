@@ -267,7 +267,7 @@ export class CronService {
 
       await this.gameService.updateGame(update, game.id);
     }
-    // gameSet.forEach((game) => this.checkIfGamedayIsFinished(game));
+    gameSet.forEach((game) => this.checkIfGamedayIsFinished(game));
   }
 
   async checkIfGamedayIsFinished(game: Game) {
@@ -517,45 +517,6 @@ export class CronService {
 
       await new Promise((res) => setTimeout(res, 6000));
     }
-  }
-
-  @Cron('05 12 * * *', { name: 'sync-bundesliga' })
-  async syncBundesiga() {
-    const ids = [220, 217];
-    for (let i = 0; i < ids.length; i++) {
-      const compID = ids[i];
-      const comp = await this.connection.getRepository(Competition).findOne({
-        where:
-        {
-          id: compID
-        }
-      });
-      const seasons = await this.connection.getRepository(Season).find({
-        where: {
-          competition: comp,
-        }
-      });
-      for (let i = 0; i < seasons.length; i++) {
-        const season = seasons[i];
-        if (Number(season.season_id) >= 2018) {
-          const x = options as any;
-          x.params = {
-            league: season.competition.competition_id,
-            season: season.season_id,
-          };
-
-          const data = (
-            await this.httpService
-              .get('https://api-handball.p.rapidapi.com/games', x)
-              .toPromise()
-          ).data.response;
-          await this.syncGames(data, season)
-          await this.syncPoints(data);
-    
-          await new Promise((res) => setTimeout(res, 6000));
-        }
-      }
-    }    
   }
 
   async syncGamesForNewGroup(season: Season) {
