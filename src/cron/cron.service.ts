@@ -37,7 +37,7 @@ export class CronService {
     private readonly httpService: HttpService,
     @Inject(forwardRef(() => ConfigService))
     private configService: ConfigService,
-  ) {}
+  ) { }
 
   @Cron(CronExpression.EVERY_DAY_AT_NOON, { name: 'notifications' })
   async handleNotifications() {
@@ -267,16 +267,16 @@ export class CronService {
 
       await this.gameService.updateGame(update, game.id);
     }
-    gameSet.forEach((game) => this.checkIfGamedayIsFinished(game));
+    // gameSet.forEach((game) => this.checkIfGamedayIsFinished(game));
   }
 
   async checkIfGamedayIsFinished(game: Game) {
     this.logger.debug(
       'Checking if ' +
-        game.season.name +
-        ' gameday ' +
-        game.gameday +
-        ' has finshed...',
+      game.season.name +
+      ' gameday ' +
+      game.gameday +
+      ' has finshed...',
     );
     let games = await this.gameRepository.find({
       where: {
@@ -362,12 +362,12 @@ export class CronService {
     let formattedStandings =
       points.length > 0
         ? '1. Place: ' +
-          points[0].name +
-          ' with ' +
-          points[0].score +
-          ' points. (Overall: ' +
-          points[0].total +
-          ')'
+        points[0].name +
+        ' with ' +
+        points[0].score +
+        ' points. (Overall: ' +
+        points[0].total +
+        ')'
         : 'Nobody played this gameday.';
     let place = 1;
     let skipped = 0;
@@ -442,10 +442,10 @@ export class CronService {
         // Response is a message ID string.
         this.logger.debug(
           'Successfully sent group message for ' +
-            groupName +
-            ' (id: ' +
-            group_id +
-            ')',
+          groupName +
+          ' (id: ' +
+          group_id +
+          ')',
         );
       })
       .catch((error) => {
@@ -500,7 +500,7 @@ export class CronService {
           .toPromise()
       ).data.response;
 
-      
+
       // DIRTY FIX FOR WORLD CHAMPIONSHIP 2025 --> Games for World cup since 2021 are all combined into a single competition, so we split only the games after Jan. 1st 2025
       if (season.id == 1075) {
         const filtered_data = data.filter((e) =>
@@ -517,6 +517,45 @@ export class CronService {
 
       await new Promise((res) => setTimeout(res, 6000));
     }
+  }
+
+  @Cron('45 11 * * *', { name: 'sync-bundesliga' })
+  async syncBundesiga() {
+    const ids = [220, 217];
+    for (let i = 0; i < ids.length; i++) {
+      const compID = ids[i];
+      const comp = await this.connection.getRepository(Competition).findOne({
+        where:
+        {
+          id: compID
+        }
+      });
+      const seasons = await this.connection.getRepository(Season).find({
+        where: {
+          competition: comp,
+        }
+      });
+      for (let i = 0; i < seasons.length; i++) {
+        const season = seasons[i];
+        if (Number(season.season_id) >= 2018) {
+          const x = options as any;
+          x.params = {
+            league: season.competition.competition_id,
+            season: season.season_id,
+          };
+
+          const data = (
+            await this.httpService
+              .get('https://api-handball.p.rapidapi.com/games', x)
+              .toPromise()
+          ).data.response;
+
+          await this.syncPoints(data);
+    
+          await new Promise((res) => setTimeout(res, 6000));
+        }
+      }
+    }    
   }
 
   async syncGamesForNewGroup(season: Season) {
@@ -754,10 +793,10 @@ export class CronService {
     );
     const rgb = result
       ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16),
+      }
       : null;
 
     // calculate if color is visually light or dark
@@ -882,7 +921,7 @@ export class CronService {
     }
   }
 
-  async generateHistory(team_id: number, season_id: number): Promise<{result: string, scores_home_team: Number[], scores_away_team: Number[], other_team_name: string[]}> {
+  async generateHistory(team_id: number, season_id: number): Promise<{ result: string, scores_home_team: Number[], scores_away_team: Number[], other_team_name: string[] }> {
     const games = await this.gameRepository
       .createQueryBuilder('game')
       .innerJoinAndSelect('game.team1', 'team1')
@@ -897,7 +936,7 @@ export class CronService {
       .orderBy('game.date', 'DESC')
       .limit(5)
       .getMany();
-    
+
     let history_string = {
       result: '',
       scores_home_team: [],
