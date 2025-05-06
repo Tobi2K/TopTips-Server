@@ -68,9 +68,9 @@ export class PointsService {
             },
           );
         } else {
-          if (perfect) {
-            this.notifyPerfectGuess(game, userGuess);
-          }
+          // if (perfect) {
+          //   this.notifyPerfectGuess(game, userGuess);
+          // }
           const point = new Points();
           point.game = game;
           point.group = userGuess.group;
