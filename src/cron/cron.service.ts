@@ -519,7 +519,7 @@ export class CronService {
     }
   }
 
-  @Cron('45 11 * * *', { name: 'sync-bundesliga' })
+  @Cron('52 11 * * *', { name: 'sync-bundesliga' })
   async syncBundesiga() {
     const ids = [220, 217];
     for (let i = 0; i < ids.length; i++) {
@@ -549,7 +549,7 @@ export class CronService {
               .get('https://api-handball.p.rapidapi.com/games', x)
               .toPromise()
           ).data.response;
-
+          await this.syncGames(data, season)
           await this.syncPoints(data);
     
           await new Promise((res) => setTimeout(res, 6000));
