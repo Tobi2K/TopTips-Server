@@ -10,6 +10,10 @@ env:
   FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
   FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
   FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+  SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+  APP_VERSION: ${{ secrets.APP_VERSION }}
+  CRON: ${{ secrets.CRON }}
+  JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
 jobs:
   build:
@@ -35,6 +39,15 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
+          build-args: |
+            API_KEY=${{ secrets.API_KEY }}
+            FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+            FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}
+            FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}
+            SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}
+            APP_VERSION=${{ secrets.APP_VERSION }}
+            CRON=${{ secrets.CRON }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
           push: true
           tags: ghcr.io/tobi2k/top-tips
 
@@ -50,16 +63,7 @@ jobs:
             docker pull ghcr.io/tobi2k/top-tips
             docker stop top-tips-server
             docker rm top-tips-server
-            rm ./.env && touch ./.env
-            echo 'API_KEY=${{ secrets.API_KEY }}' >> ./.env
-            echo 'SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}' >> ./.env
-            echo 'APP_VERSION=${{ secrets.APP_VERSION }}' >> ./.env
-            echo 'CRON=${{ secrets.CRON }}' >> ./.env
-            echo 'JWT_SECRET=${{ secrets.JWT_SECRET }}' >> ./.env
-            echo 'FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}' >> ./.env
-            echo 'FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}' >> ./.env
-            echo 'FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}' >> ./.env
-            docker run -d --restart unless-stopped --network host --name=top-tips-server --env-file ./.env ghcr.io/tobi2k/top-tips
+            docker run -d --restart unless-stopped --network host --name=top-tips-server ghcr.io/tobi2k/top-tips
           host: ${{ secrets.HOST }}
           user: root
           key: ${{ secrets.PRIVATE_KEY}}

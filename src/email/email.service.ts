@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Game } from 'src/database/entities/game.entity';
 import { Guess } from 'src/database/entities/guess.entity';
@@ -9,6 +9,7 @@ import { Season } from 'src/database/entities/season.entity';
 import { EmailNotify } from 'src/database/entities/email-notify.entity';
 import { Group } from 'src/database/entities/group.entity';
 import { GroupMembers } from 'src/database/entities/group-members.entity';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class EmailService {
@@ -25,6 +26,8 @@ export class EmailService {
       @InjectRepository(User)
       private userRepository: Repository<User>,
       private connection: Connection,
+      @Inject(forwardRef(() => ConfigService))
+      private configService: ConfigService,
   ) {
       this.sgMail.setApiKey(process.env.SENDGRID_API_KEY);
   }
@@ -178,6 +181,10 @@ export class EmailService {
     today: boolean,
     users: User[],
   ) {
+    if (this.configService.get<string>('CRON') != 'enabled') {
+      this.logger.debug('Cron jobs are not enabled!');
+      return;
+    }
     let days = '';
     if (gamedays.length == 0) {
       this.logger.debug('No Games');
