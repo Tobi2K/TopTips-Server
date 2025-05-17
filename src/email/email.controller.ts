@@ -15,12 +15,20 @@ export class EmailController {
 
   @Post('subscribe')
   async subToNotification(@Body() body: GetEmailNotifyDto, @Request() req) {
-    return this.emailService.subscribeToNotification(req.user, body.seasonID, body.isToday);
+    return this.emailService.subscribeToNotification(
+      req.user,
+      body.seasonID,
+      body.isToday,
+    );
   }
 
   @Post('unsubscribe')
   async unsubFromNotification(@Body() body: GetEmailNotifyDto, @Request() req) {
-    return this.emailService.unsubscribeFromNotification(req.user, body.seasonID, body.isToday);
+    return this.emailService.unsubscribeFromNotification(
+      req.user,
+      body.seasonID,
+      body.isToday,
+    );
   }
 
   @Get('subscribed')

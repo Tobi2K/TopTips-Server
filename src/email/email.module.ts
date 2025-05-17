@@ -21,30 +21,30 @@ import { Points } from 'src/database/entities/points.entity';
 import { EmailService } from './email.service';
 
 @Module({
-    imports: [
-      TypeOrmModule.forFeature([
-        Game,
-        Guess,
-        Group,
-        GroupMembers,
-        User,
-        Team,
-        Standing,
-        Points,
-      ]),
-      HttpModule,
-      ConfigModule,
-    ],
-    providers: [
-      EmailService,
-      GameService,
-      PointsService,
-      GuessService,
-      GroupService,
-      UsersService,
-      CronService,
-      StandingService,
-    ],
-    controllers: [EmailController],
-  })
+  imports: [
+    TypeOrmModule.forFeature([
+      Game,
+      Guess,
+      Group,
+      GroupMembers,
+      User,
+      Team,
+      Standing,
+      Points,
+    ]),
+    HttpModule,
+    ConfigModule,
+  ],
+  providers: [
+    EmailService,
+    GameService,
+    PointsService,
+    GuessService,
+    GroupService,
+    UsersService,
+    CronService,
+    StandingService,
+  ],
+  controllers: [EmailController],
+})
 export class EmailModule {}

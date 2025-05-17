@@ -393,9 +393,15 @@ export class GroupService {
       team.name = e.name;
       team.abbreviation = e.name.slice(0, 3).toString().toUpperCase();
       // Get last word of team name, but not if it is only more than 3 characters and does not contain any special characters
-      team.short_name = e.name.split(" ").filter((val: string) => {
-        return val.length > 2 && !/[!@#$%^&*()_+=\[\]{};':"\\|,<>?]+/.test(val)
-      }).at(-1) ?? e.name
+      team.short_name =
+        e.name
+          .split(' ')
+          .filter((val: string) => {
+            return (
+              val.length > 2 && !/[!@#$%^&*()_+=\[\]{};':"\\|,<>?]+/.test(val)
+            );
+          })
+          .at(-1) ?? e.name;
       const colors = this.generateColors(e.id + e.name);
       team.background_color = colors.background_color;
       team.text_color = colors.text_color;

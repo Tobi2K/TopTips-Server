@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class GetEmailNotifyDto {
-    @ApiProperty()
-    seasonID: number;
+  @ApiProperty()
+  seasonID: number;
 
-    @ApiProperty()
-    isToday: boolean;
+  @ApiProperty()
+  isToday: boolean;
 }

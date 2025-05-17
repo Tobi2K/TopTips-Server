@@ -790,7 +790,7 @@ export class CronService {
   async syncStanding() {
     if (this.configService.get<string>('CRON') != 'enabled') {
       this.logger.debug('Cron jobs are not enabled!');
-      return;
+      // return;
     }
     this.logger.debug('Syncing standings...');
     const importantSeasons = await this.getActiveSeasons(1);

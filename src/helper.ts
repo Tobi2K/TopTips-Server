@@ -11,7 +11,12 @@ export class TeamDetails {
   goals_min: number;
   goals_avg: number;
   points: number;
-  history: {result: string, scores_home_team: Number[], scores_away_team: Number[], other_team_name: string[]};
+  history: {
+    result: string;
+    scores_home_team: number[];
+    scores_away_team: number[];
+    other_team_name: string[];
+  };
 
   constructor(
     name?: string,
@@ -26,7 +31,12 @@ export class TeamDetails {
     goals_min?: number,
     goals_avg?: number,
     points?: number,
-    history?: {result: string, scores_home_team: Number[], scores_away_team: Number[], other_team_name: string[]},
+    history?: {
+      result: string;
+      scores_home_team: number[];
+      scores_away_team: number[];
+      other_team_name: string[];
+    },
   ) {
     this.name = name;
     this.team_id = team_id;
@@ -43,7 +53,9 @@ export class TeamDetails {
     this.history = history;
   }
 
-  static fromJSON(d: Object): TeamDetails {
+  static fromJSON(d: object): TeamDetails {
+    console.log('d', d);
+    
     return Object.assign(new TeamDetails(), d);
-}
+  }
 }
