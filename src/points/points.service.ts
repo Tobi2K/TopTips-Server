@@ -33,7 +33,7 @@ export class PointsService {
     private connection: Connection,
     @Inject(forwardRef(() => ConfigService))
     private configService: ConfigService,
-  ) { }
+  ) {}
 
   async calculateGamePoints(game_id: number) {
     const game: Game = await this.connection.getRepository(Game).findOne({
@@ -56,7 +56,7 @@ export class PointsService {
             where: { game: game, group: userGuess.group, user: userGuess.user },
           });
 
-        if (existingPoints) {          
+        if (existingPoints) {
           await this.pointRepository.update(
             {
               game: game,
@@ -333,13 +333,23 @@ export class PointsService {
       return;
     }
 
-    const group = guess.group
-    const user = guess.user
+    const group = guess.group;
+    const user = guess.user;
 
     const message = {
       notification: {
         title: user.name + ' guessed perfectly!',
-        body: game.team1.name + ' vs. ' + game.team2.name + ', ' + game.score_team1 + ' - ' + game.score_team2 + " (Group: " + group.name + ")",
+        body:
+          game.team1.name +
+          ' vs. ' +
+          game.team2.name +
+          ', ' +
+          game.score_team1 +
+          ' - ' +
+          game.score_team2 +
+          ' (Group: ' +
+          group.name +
+          ')',
       },
       android: {
         priority: 'high' as any,
@@ -358,10 +368,13 @@ export class PointsService {
         // Response is a message ID string.
         this.logger.debug(
           'Successfully sent perfect guess message for ' +
-          group.name +
-          ' (id: ' +
-          group.id +
-          ') ' + message.notification.title + ' --- ' + message.notification.body,
+            group.name +
+            ' (id: ' +
+            group.id +
+            ') ' +
+            message.notification.title +
+            ' --- ' +
+            message.notification.body,
         );
       })
       .catch((error) => {

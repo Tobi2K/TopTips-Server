@@ -125,50 +125,79 @@ export class GameService {
       );
 
       const head_to_head_team1_home = await this.gameRepository
-      .createQueryBuilder('game')
-      .innerJoinAndSelect('game.team1', 'team1')
-      .innerJoinAndSelect('game.team2', 'team2')
-      .where(
-        'team1_id = :team_id1 AND team2_id = :team_id2 AND completed = 1',
-        {
-          team_id1: val.team1.id,
-          team_id2: val.team2.id,
-        },
-      )
-      .orderBy('game.date', 'DESC')
-      .getMany();
+        .createQueryBuilder('game')
+        .innerJoinAndSelect('game.team1', 'team1')
+        .innerJoinAndSelect('game.team2', 'team2')
+        .where(
+          'team1_id = :team_id1 AND team2_id = :team_id2 AND completed = 1',
+          {
+            team_id1: val.team1.id,
+            team_id2: val.team2.id,
+          },
+        )
+        .orderBy('game.date', 'DESC')
+        .getMany();
 
       const head_to_head_team1_away = await this.gameRepository
-      .createQueryBuilder('game')
-      .innerJoinAndSelect('game.team1', 'team1')
-      .innerJoinAndSelect('game.team2', 'team2')
-      .where(
-        'team1_id = :team_id2 AND team2_id = :team_id1 AND completed = 1',
-        {
-          team_id1: val.team1.id,
-          team_id2: val.team2.id,
-        },
-      )
-      .orderBy('game.date', 'DESC')
-      .getMany();
+        .createQueryBuilder('game')
+        .innerJoinAndSelect('game.team1', 'team1')
+        .innerJoinAndSelect('game.team2', 'team2')
+        .where(
+          'team1_id = :team_id2 AND team2_id = :team_id1 AND completed = 1',
+          {
+            team_id1: val.team1.id,
+            team_id2: val.team2.id,
+          },
+        )
+        .orderBy('game.date', 'DESC')
+        .getMany();
 
-      const head_to_head = head_to_head_team1_home.concat(head_to_head_team1_away).map((val) => {
-        return {game: val, team1_won: val.score_team1 > val.score_team2, team2_won: val.score_team1 < val.score_team2}
-      }).sort((a, b) => 
-        (a.game.date > b.game.date ? -1 : 1)
-      ).slice(0, 10);
-
+      const head_to_head = head_to_head_team1_home
+        .concat(head_to_head_team1_away)
+        .map((val) => {
+          return {
+            game: val,
+            team1_won: val.score_team1 > val.score_team2,
+            team2_won: val.score_team1 < val.score_team2,
+          };
+        })
+        .sort((a, b) => (a.game.date > b.game.date ? -1 : 1))
+        .slice(0, 10);
 
       const head_to_head_home = head_to_head_team1_home.map((val) => {
-        return {home_team: val.score_team1, away_team: val.score_team2, home_team_won: val.score_team1 > val.score_team2, away_team_won: val.score_team1 < val.score_team2, date: val.date}
-      })
+        return {
+          home_team: val.score_team1,
+          away_team: val.score_team2,
+          home_team_won: val.score_team1 > val.score_team2,
+          away_team_won: val.score_team1 < val.score_team2,
+          date: val.date,
+        };
+      });
       const head_to_head_away = head_to_head_team1_away.map((val) => {
-        return {home_team: val.score_team2, away_team: val.score_team1, home_team_won: val.score_team2 > val.score_team1, away_team_won: val.score_team2 < val.score_team1, date: val.date}
-      })
+        return {
+          home_team: val.score_team2,
+          away_team: val.score_team1,
+          home_team_won: val.score_team2 > val.score_team1,
+          away_team_won: val.score_team2 < val.score_team1,
+          date: val.date,
+        };
+      });
 
-      const draws = head_to_head_home.concat(head_to_head_away).filter((val) => {return !val.home_team_won && !val.away_team_won}).length
-      const count_home_games = head_to_head_home.concat(head_to_head_away).filter((val) => {return val.home_team_won}).length
-      const count_away_games = head_to_head_home.concat(head_to_head_away).filter((val) => {return val.away_team_won}).length
+      const draws = head_to_head_home
+        .concat(head_to_head_away)
+        .filter((val) => {
+          return !val.home_team_won && !val.away_team_won;
+        }).length;
+      const count_home_games = head_to_head_home
+        .concat(head_to_head_away)
+        .filter((val) => {
+          return val.home_team_won;
+        }).length;
+      const count_away_games = head_to_head_home
+        .concat(head_to_head_away)
+        .filter((val) => {
+          return val.away_team_won;
+        }).length;
 
       const x = {
         id: val.id,

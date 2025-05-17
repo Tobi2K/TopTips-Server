@@ -37,7 +37,7 @@ export class CronService {
     private readonly httpService: HttpService,
     @Inject(forwardRef(() => ConfigService))
     private configService: ConfigService,
-  ) { }
+  ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_NOON, { name: 'notifications' })
   async handleNotifications() {
@@ -273,10 +273,10 @@ export class CronService {
   async checkIfGamedayIsFinished(game: Game) {
     this.logger.debug(
       'Checking if ' +
-      game.season.name +
-      ' gameday ' +
-      game.gameday +
-      ' has finshed...',
+        game.season.name +
+        ' gameday ' +
+        game.gameday +
+        ' has finshed...',
     );
     let games = await this.gameRepository.find({
       where: {
@@ -362,12 +362,12 @@ export class CronService {
     let formattedStandings =
       points.length > 0
         ? '1. Place: ' +
-        points[0].name +
-        ' with ' +
-        points[0].score +
-        ' points. (Overall: ' +
-        points[0].total +
-        ')'
+          points[0].name +
+          ' with ' +
+          points[0].score +
+          ' points. (Overall: ' +
+          points[0].total +
+          ')'
         : 'Nobody played this gameday.';
     let place = 1;
     let skipped = 0;
@@ -442,10 +442,10 @@ export class CronService {
         // Response is a message ID string.
         this.logger.debug(
           'Successfully sent group message for ' +
-          groupName +
-          ' (id: ' +
-          group_id +
-          ')',
+            groupName +
+            ' (id: ' +
+            group_id +
+            ')',
         );
       })
       .catch((error) => {
@@ -465,9 +465,15 @@ export class CronService {
       team.competitor_id = competitor.id;
       team.name = competitor.name;
       team.abbreviation = competitor.name.slice(0, 3).toString().toUpperCase();
-      team.short_name = competitor.name.split(" ").filter((val: string) => {
-        return val.length > 2 && !/[!@#$%^&*()_+=\[\]{};':"\\|,<>?]+/.test(val)
-      }).at(-1) ?? competitor.name
+      team.short_name =
+        competitor.name
+          .split(' ')
+          .filter((val: string) => {
+            return (
+              val.length > 2 && !/[!@#$%^&*()_+=\[\]{};':"\\|,<>?]+/.test(val)
+            );
+          })
+          .at(-1) ?? competitor.name;
       const colors = this.generateColors(competitor.id + competitor.name);
       team.background_color = colors.background_color;
       team.text_color = colors.text_color;
@@ -500,11 +506,10 @@ export class CronService {
           .toPromise()
       ).data.response;
 
-
       // DIRTY FIX FOR WORLD CHAMPIONSHIP 2025 --> Games for World cup since 2021 are all combined into a single competition, so we split only the games after Jan. 1st 2025
       if (season.id == 1075) {
-        const filtered_data = data.filter((e) =>
-          this.moment("2025-01-01") < this.moment(e.date)
+        const filtered_data = data.filter(
+          (e) => this.moment('2025-01-01') < this.moment(e.date),
         );
         await this.syncGames(filtered_data, season);
 
@@ -613,8 +618,11 @@ export class CronService {
         } else {
           db.current = season.current;
           db.name = comp.name + ' ' + season.season;
-          if (this.moment(db.end_date).add(1, 'days') < this.moment().startOf('day')) {
-            db.important = 0
+          if (
+            this.moment(db.end_date).add(1, 'days') <
+            this.moment().startOf('day')
+          ) {
+            db.important = 0;
           }
           seasonRepository.save(db);
         }
@@ -667,9 +675,15 @@ export class CronService {
         team.competitor_id = e.id;
         team.name = e.name;
         team.abbreviation = e.name.slice(0, 3).toString().toUpperCase();
-        team.short_name = e.name.split(" ").filter((val: string) => {
-          return val.length > 2 && !/[!@#$%^&*()_+=\[\]{};':"\\|,<>?]+/.test(val)
-        }).at(-1) ?? e.name
+        team.short_name =
+          e.name
+            .split(' ')
+            .filter((val: string) => {
+              return (
+                val.length > 2 && !/[!@#$%^&*()_+=\[\]{};':"\\|,<>?]+/.test(val)
+              );
+            })
+            .at(-1) ?? e.name;
         const colors = this.generateColors(e.id + e.name);
         team.background_color = colors.background_color;
         team.text_color = colors.text_color;
@@ -754,10 +768,10 @@ export class CronService {
     );
     const rgb = result
       ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
-      }
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
       : null;
 
     // calculate if color is visually light or dark
@@ -882,7 +896,15 @@ export class CronService {
     }
   }
 
-  async generateHistory(team_id: number, season_id: number): Promise<{ result: string, scores_home_team: Number[], scores_away_team: Number[], other_team_name: string[] }> {
+  async generateHistory(
+    team_id: number,
+    season_id: number,
+  ): Promise<{
+    result: string;
+    scores_home_team: number[];
+    scores_away_team: number[];
+    other_team_name: string[];
+  }> {
     const games = await this.gameRepository
       .createQueryBuilder('game')
       .innerJoinAndSelect('game.team1', 'team1')
@@ -898,7 +920,7 @@ export class CronService {
       .limit(5)
       .getMany();
 
-    let history_string = {
+    const history_string = {
       result: '',
       scores_home_team: [],
       scores_away_team: [],

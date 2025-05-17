@@ -17,23 +17,24 @@ export class EmailService {
   private sgMail = require('@sendgrid/mail');
   private readonly logger = new Logger(EmailService.name);
 
-
   constructor(
-      @InjectRepository(Game)
-      private gameRepository: Repository<Game>,
-      @InjectRepository(Guess)
-      private guessRepository: Repository<Guess>,
-      @InjectRepository(User)
-      private userRepository: Repository<User>,
-      private connection: Connection,
-      @Inject(forwardRef(() => ConfigService))
-      private configService: ConfigService,
+    @InjectRepository(Game)
+    private gameRepository: Repository<Game>,
+    @InjectRepository(Guess)
+    private guessRepository: Repository<Guess>,
+    private connection: Connection,
+    @Inject(forwardRef(() => ConfigService))
+    private configService: ConfigService,
   ) {
-      this.sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    this.sgMail.setApiKey(process.env.SENDGRID_API_KEY);
   }
 
   @Cron('15 12 * * *', { name: 'notifications-email' })
   async handleNotifications() {
+    if (this.configService.get<string>('CRON') != 'enabled') {
+      this.logger.debug('Cron jobs are not enabled!');
+      return;
+    }
     this.logger.debug('Checking for games today and tomorrow');
 
     const importantSeasons = await this.getActiveSeasons(1);
@@ -43,38 +44,48 @@ export class EmailService {
 
       const [gamedaysToday, gameIDsToday] = this.getGamesInNDays(games, 0);
 
-      const usersToday = (await this.connection.getRepository(EmailNotify).find({
-        where: {
-          season: season,
-          day_of: true,
-        }
-      })).map((val => {return val.user}));
-      
+      const usersToday = (
+        await this.connection.getRepository(EmailNotify).find({
+          where: {
+            season: season,
+            day_of: true,
+          },
+        })
+      ).map((val) => {
+        return val.user;
+      });
 
-      const usersTomorrow = (await this.connection.getRepository(EmailNotify).find({
-        where: {
-          season: season,
-          day_before: true,
-        }
-      })).map((val => {return val.user}));
+      const usersTomorrow = (
+        await this.connection.getRepository(EmailNotify).find({
+          where: {
+            season: season,
+            day_before: true,
+          },
+        })
+      ).map((val) => {
+        return val.user;
+      });
 
       const notifyUsersToday = await this.filterUsersByGuesses(
         usersToday,
         gameIDsToday,
         season,
       );
-  
-      const [gamedaysTomorrow, gameIDsTomorrow] = this.getGamesInNDays(games, 1);
+
+      const [gamedaysTomorrow, gameIDsTomorrow] = this.getGamesInNDays(
+        games,
+        1,
+      );
 
       const notifyUsersTomorrow = await this.filterUsersByGuesses(
         usersTomorrow,
         gameIDsTomorrow,
         season,
       );
-  
+
       gamedaysTomorrow.sort((x, y) => x - y);
       gamedaysToday.sort((x, y) => x - y);
-  
+
       if (gamedaysToday.length > 0)
         this.sendNotification(
           season.name,
@@ -82,7 +93,7 @@ export class EmailService {
           true,
           notifyUsersToday,
         );
-  
+
       if (gamedaysTomorrow.length > 0)
         this.sendNotification(
           season.name,
@@ -181,10 +192,6 @@ export class EmailService {
     today: boolean,
     users: User[],
   ) {
-    if (this.configService.get<string>('CRON') != 'enabled') {
-      this.logger.debug('Cron jobs are not enabled!');
-      return;
-    }
     let days = '';
     if (gamedays.length == 0) {
       this.logger.debug('No Games');
@@ -192,7 +199,7 @@ export class EmailService {
     } else if (gamedays.length == 1) {
       this.logger.debug('There is a game');
       if (gamedays[0] == -1) {
-        days = 'Gameday: Playoffs'
+        days = 'Gameday: Playoffs';
       } else {
         days = 'Gameday: ' + gamedays[0];
       }
@@ -207,7 +214,7 @@ export class EmailService {
         }
       }
       if (gamedays[gamedays.length - 1] == -1) {
-        days += "Playoffs";
+        days += 'Playoffs';
       } else {
         days += gamedays[gamedays.length - 1];
       }
@@ -283,31 +290,45 @@ export class EmailService {
     });
 
     if (dbuser && dbseason) {
-      const dbemailnotify = await this.connection.getRepository(EmailNotify).findOne({
-        where: {user: dbuser, season: dbseason}
-      })
+      const dbemailnotify = await this.connection
+        .getRepository(EmailNotify)
+        .findOne({
+          where: { user: dbuser, season: dbseason },
+        });
 
       if (dbemailnotify) {
         if (today) {
-          this.logger.debug('Subscribing for ' + user.username + " to dayof notifications.");
-          await this.connection.getRepository(EmailNotify).update(dbemailnotify, {day_of: true})
+          this.logger.debug(
+            'Subscribing for ' + user.username + ' to dayof notifications.',
+          );
+          await this.connection
+            .getRepository(EmailNotify)
+            .update(dbemailnotify, { day_of: true });
         } else {
-          this.logger.debug('Subscribing for ' + user.username + " to day before notifications.");
-          await this.connection.getRepository(EmailNotify).update(dbemailnotify, {day_before: true})
+          this.logger.debug(
+            'Subscribing for ' +
+              user.username +
+              ' to day before notifications.',
+          );
+          await this.connection
+            .getRepository(EmailNotify)
+            .update(dbemailnotify, { day_before: true });
         }
       } else {
-          this.logger.debug('Adding subscription for ' + user.username + " with dayOf: " + today);
-          await this.connection.getRepository(EmailNotify).insert({
-            user: dbuser,
-            season: dbseason,
-            day_of: today,
-            day_before: !today,
-          })
+        this.logger.debug(
+          'Adding subscription for ' + user.username + ' with dayOf: ' + today,
+        );
+        await this.connection.getRepository(EmailNotify).insert({
+          user: dbuser,
+          season: dbseason,
+          day_of: today,
+          day_before: !today,
+        });
       }
     }
-    return this.getSubscriptions(user)
+    return this.getSubscriptions(user);
   }
-  
+
   async unsubscribeFromNotification(user, seasonID: number, today: boolean) {
     this.logger.debug('Attempting unsubscribing for ' + user.username);
     const dbuser = await this.connection.getRepository(User).findOne({
@@ -319,29 +340,43 @@ export class EmailService {
     });
 
     if (dbuser && dbseason) {
-      const dbemailnotify = await this.connection.getRepository(EmailNotify).findOne({
-        where: {user: dbuser, season: dbseason}
-      })
+      const dbemailnotify = await this.connection
+        .getRepository(EmailNotify)
+        .findOne({
+          where: { user: dbuser, season: dbseason },
+        });
 
       if (dbemailnotify) {
         if (today) {
-          this.logger.debug('Unsubscribing for ' + user.username + " to dayof notifications.");
-          await this.connection.getRepository(EmailNotify).update(dbemailnotify, {day_of: false})
+          this.logger.debug(
+            'Unsubscribing for ' + user.username + ' to dayof notifications.',
+          );
+          await this.connection
+            .getRepository(EmailNotify)
+            .update(dbemailnotify, { day_of: false });
         } else {
-          this.logger.debug('Unsubscribing for ' + user.username + " to day before notifications.");
-          await this.connection.getRepository(EmailNotify).update(dbemailnotify, {day_before: false})
+          this.logger.debug(
+            'Unsubscribing for ' +
+              user.username +
+              ' to day before notifications.',
+          );
+          await this.connection
+            .getRepository(EmailNotify)
+            .update(dbemailnotify, { day_before: false });
         }
       } else {
-          this.logger.debug('Adding subscription for ' + user.username + " with dayOf: " + today);
-          await this.connection.getRepository(EmailNotify).insert({
-            user: dbuser,
-            season: dbseason,
-            day_of: false,
-            day_before: false,
-          })
+        this.logger.debug(
+          'Adding subscription for ' + user.username + ' with dayOf: ' + today,
+        );
+        await this.connection.getRepository(EmailNotify).insert({
+          user: dbuser,
+          season: dbseason,
+          day_of: false,
+          day_before: false,
+        });
       }
     }
-    return this.getSubscriptions(user)
+    return this.getSubscriptions(user);
   }
 
   async getSubscriptions(user) {
@@ -380,26 +415,30 @@ export class EmailService {
         }
       }
       for (let i = 0; i < seasonArray.length; i++) {
-        const dbseason = seasonArray[i]
-        const dbEmail = await this.connection.getRepository(EmailNotify).findOne({where: {
-          user: dbuser,
-          season: dbseason,
-        }})
+        const dbseason = seasonArray[i];
+        const dbEmail = await this.connection
+          .getRepository(EmailNotify)
+          .findOne({
+            where: {
+              user: dbuser,
+              season: dbseason,
+            },
+          });
         if (!dbEmail) {
           await this.connection.getRepository(EmailNotify).insert({
             user: dbuser,
             season: dbseason,
             day_of: false,
             day_before: false,
-          })
-        }        
+          });
+        }
       }
     }
 
     let dbemailnotify = await this.connection.getRepository(EmailNotify).find({
-      where: {user: dbuser}
-    })
+      where: { user: dbuser },
+    });
 
-    return dbemailnotify
+    return dbemailnotify;
   }
 }
