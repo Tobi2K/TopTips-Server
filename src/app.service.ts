@@ -46,6 +46,10 @@ export class AppService {
             version: lastVersion,
           },
         });
+      
+      if (!userNotes) {
+        return [];
+      }
 
       const allPreviousNotes = await this.connection
         .getRepository(PatchNotes)
