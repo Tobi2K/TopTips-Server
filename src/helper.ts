@@ -54,8 +54,6 @@ export class TeamDetails {
   }
 
   static fromJSON(d: object): TeamDetails {
-    console.log('d', d);
-    
     return Object.assign(new TeamDetails(), d);
   }
 }

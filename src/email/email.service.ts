@@ -435,9 +435,11 @@ export class EmailService {
       }
     }
 
-    const dbemailnotify = await this.connection.getRepository(EmailNotify).find({
-      where: { user: dbuser },
-    });
+    const dbemailnotify = await this.connection
+      .getRepository(EmailNotify)
+      .find({
+        where: { user: dbuser },
+      });
 
     return dbemailnotify;
   }
