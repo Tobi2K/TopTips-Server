@@ -50,4 +50,9 @@ export class CronController {
   syncStanding() {
     return this.cronService.syncStanding();
   }
+
+  @Get('sync/getSeasons')
+  getActiveSeasons() {
+    return this.cronService.getActiveSeasons();
+  }
 }

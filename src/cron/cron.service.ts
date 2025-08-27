@@ -47,7 +47,7 @@ export class CronService {
     }
     this.logger.debug('Checking for games today');
 
-    const allActiveSeasons = await this.getActiveSeasons(1);
+    const allActiveSeasons = await this.getActiveSeasons();
 
     allActiveSeasons.forEach(async (season) => {
       const dbseason = await this.connection
@@ -139,16 +139,15 @@ export class CronService {
       });
   }
 
-  async getActiveSeasons(importance: number) {
+  async getActiveSeasons() {
     let activeGroups = await this.connection.getRepository(Group).find();
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() - 8);
+
     activeGroups = activeGroups.filter((s) => {
       return (
-        s.season.important == importance &&
-        s.season.start_date < new Date() &&
-        s.season.end_date > nextWeek &&
-        s.season.current
+        // The season starts in less than 8 days or has already started (also includes past seasons!)
+        this.moment(s.season.start_date).subtract(8, 'days').isSameOrBefore(this.moment()) &&
+        // The seasons has not ended or ended in the last 8 days (also includes future seasons!)
+        this.moment(s.season.end_date).add(8, 'days').isSameOrAfter(this.moment())
       );
     });
 
@@ -491,7 +490,70 @@ export class CronService {
     }
     this.logger.debug('Syncing important games and scores...');
 
-    const seasons = await this.getActiveSeasons(1);
+    const seasons = await this.getActiveSeasons();
+    for (let i = 0; i < seasons.length; i++) {
+      // Check if this season has at least one game today
+      const season = seasons[i];
+      const games = await this.gameRepository.find({
+        where: {
+          season: season,
+        },
+      });
+      let gameToday = false;
+      for (const game of games) {
+        if (this.moment(game.date).isSame(this.moment(), 'day')) {
+          // there is a game today
+          gameToday = true;
+        }
+      }
+      const is12PM = this.moment().hour() === 12;
+      
+      if (!gameToday) {
+        if (!is12PM) continue; // only sync seasons with games today, except at 12PM
+      }
+      const x = options as any;
+      x.params = {
+        league: season.competition.competition_id,
+        season: season.season_id,
+      };
+
+      const data = (
+        await this.httpService
+          .get('https://api-handball.p.rapidapi.com/games', x)
+          .toPromise()
+      ).data.response;
+
+      // DIRTY FIX FOR WORLD CHAMPIONSHIP 2025 --> Games for World cup since 2021 are all combined into a single competition, so we split only the games after Jan. 1st 2025
+      if (season.id == 1075) {
+        const filtered_data = data.filter(
+          (e) => this.moment('2025-01-01') < this.moment(e.date),
+        );
+        await this.syncGames(filtered_data, season);
+
+        this.syncPoints(filtered_data);
+      } else {
+        await this.syncGames(data, season);
+
+        this.syncPoints(data);
+      }
+
+      await new Promise((res) => setTimeout(res, 6000));
+    }
+  }
+
+  @Cron('*/15 * * * *', { name: 'sync-important-games' }) // At minute 0 past hour 0, 12, and every hour from 16 through 23. => 10 times daily per important season
+  async syncCurrentGames() { // This is a method to custom sync games when called manually, same as syncImportantGames
+    if (this.configService.get<string>('CRON') != 'enabled') {
+      this.logger.debug('Cron jobs are not enabled!');
+      // return;
+    }
+    this.logger.debug('Syncing current games and scores...');
+
+    const seasons = await this.connection.getRepository(Season).find({
+      where: {
+        current: true,
+      },
+    });
     for (let i = 0; i < seasons.length; i++) {
       const season = seasons[i];
       const x = options as any;
@@ -519,6 +581,10 @@ export class CronService {
 
         this.syncPoints(data);
       }
+      
+      this.connection.getRepository(Season).update(season, {
+          current: false,
+        });
 
       await new Promise((res) => setTimeout(res, 6000));
     }
@@ -597,7 +663,6 @@ export class CronService {
         season: string;
         start: string;
         end: string;
-        current: boolean;
       }) => {
         const db = await seasonRepository.findOne({
           where: {
@@ -613,10 +678,8 @@ export class CronService {
           seas.start_date = new Date(season.start + 'T00:00:00.000Z');
           seas.end_date = new Date(season.end + 'T00:00:00.000Z');
           seas.competition = comp;
-          seas.current = season.current;
           seasonRepository.save(seas);
         } else {
-          db.current = season.current;
           db.name = comp.name + ' ' + season.season;
           if (
             this.moment(db.end_date).add(1, 'days') <
@@ -636,7 +699,7 @@ export class CronService {
       this.logger.debug('Cron jobs are not enabled!');
       return;
     }
-    const allActiveSeasons = await this.getActiveSeasons(1);
+    const allActiveSeasons = await this.getActiveSeasons();
 
     const teamRepository = this.connection.getRepository(Team);
 
@@ -696,7 +759,7 @@ export class CronService {
 
   @Cron('0 6 * * *', { name: 'sync-current-gameday' })
   async syncCurrentGameday() {
-    const allActiveSeasons = await this.getActiveSeasons(1);
+    const allActiveSeasons = await this.getActiveSeasons();
 
     allActiveSeasons.forEach(async (season) => {
       if (season.id == 1685) {
@@ -793,7 +856,7 @@ export class CronService {
       // return;
     }
     this.logger.debug('Syncing standings...');
-    const importantSeasons = await this.getActiveSeasons(1);
+    const importantSeasons = await this.getActiveSeasons();
 
     const teamRepository = this.connection.getRepository(Team);
 

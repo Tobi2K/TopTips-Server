@@ -9,6 +9,7 @@ import { Connection, Repository } from 'typeorm';
 
 @Injectable()
 export class CompetitionService {
+  private moment = require('moment');
   constructor(
     @InjectRepository(Competition)
     private competitionRepository: Repository<Competition>,
@@ -29,7 +30,7 @@ export class CompetitionService {
     if (dbcompetition) {
       return (
         await this.seasonRepository.find({
-          where: { competition: dbcompetition, current: true },
+          where: { competition: dbcompetition },
         })
       ).sort((a, b) => a.name.localeCompare(b.name));
     } else {
@@ -57,9 +58,7 @@ export class CompetitionService {
       const seasonArray: Season[] = [];
       const groupIDArray: number[] = [];
 
-      const unimportantSeasons = await this.getActiveSeasons(0);
-      const importantSeasons = await this.getActiveSeasons(1);
-      const allActiveSeasons = unimportantSeasons.concat(importantSeasons);
+      const allActiveSeasons = await this.getActiveSeasons();
       const activeID = allActiveSeasons.map((seas) => {
         return seas.id;
       });
@@ -87,15 +86,16 @@ export class CompetitionService {
     }
   }
 
-  async getActiveSeasons(importance: number) {
+  async getActiveSeasons() {
     let activeGroups = await this.connection.getRepository(Group).find();
     const nextWeek = new Date();
     nextWeek.setDate(nextWeek.getDate() - 8);
     activeGroups = activeGroups.filter((s) => {
       return (
-        s.season.important == importance &&
-        s.season.start_date < new Date() &&
-        s.season.end_date > nextWeek
+        // The season starts in less than 8 days or has already started (also includes past seasons!)
+        this.moment(s.season.start_date).subtract(8, 'days').isSameOrBefore(this.moment()) &&
+        // The seasons has not ended or ended in the last 8 days (also includes future seasons!)
+        this.moment(s.season.end_date).add(8, 'days').isSameOrAfter(this.moment())
       );
     });
 
