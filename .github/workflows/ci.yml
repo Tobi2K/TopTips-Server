@@ -42,7 +42,7 @@ jobs:
       - name: SSH into server and pull image
         uses: fifsky/ssh-action@master
         with:
-          command: >
+          command: |
             docker pull ghcr.io/tobi2k/top-tips
 
             docker stop top-tips-server

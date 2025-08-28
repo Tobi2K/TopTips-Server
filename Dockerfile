@@ -2,7 +2,7 @@ FROM node:20.19.4
 
 ENV APP_PORT 3000
 
-ENV TZ=Europe/Berlin
+ENV TZ Europe/Berlin
 
 # ARG API_KEY
 # ENV API_KEY=${API_KEY}
