@@ -50,16 +50,16 @@ jobs:
             docker rm top-tips-server
 
             docker run -d --restart unless-stopped \
-            -e API_KEY=${{ secrets.API_KEY }} \
-            -e FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
-            -e FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }} \ 
-            -e FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }} \
-            -e APP_VERSION=${{ secrets.APP_VERSION }} \
-            -e CRON=${{ secrets.CRON }} \
-            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-            -e SMTP_HOST=${{ secrets.SMTP_HOST }} \
-            -e SMTP_PORT=${{ secrets.SMTP_PORT }} \
-            -e SMTP_TOKEN=${{ secrets.SMTP_TOKEN }} \
+            --env API_KEY=${{ secrets.API_KEY }} \
+            --env FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
+            --env FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }} \ 
+            --env FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }} \
+            --env APP_VERSION=${{ secrets.APP_VERSION }} \
+            --env CRON=${{ secrets.CRON }} \
+            --env JWT_SECRET=${{ secrets.JWT_SECRET }} \
+            --env SMTP_HOST=${{ secrets.SMTP_HOST }} \
+            --env SMTP_PORT=${{ secrets.SMTP_PORT }} \
+            --env SMTP_TOKEN=${{ secrets.SMTP_TOKEN }} \
             --network host \
             --name=top-tips-server ghcr.io/tobi2k/top-tips
           host: '${{ secrets.HOST }}'
