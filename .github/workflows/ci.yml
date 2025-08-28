@@ -43,25 +43,30 @@ jobs:
         uses: fifsky/ssh-action@master
         with:
           command: |
+            cat > .env << EOF
+            API_KEY=${{ secrets.API_KEY }}
+            FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+            FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}
+            FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}
+            APP_VERSION=${{ secrets.APP_VERSION }}
+            CRON=${{ secrets.CRON }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            SMTP_HOST=${{ secrets.SMTP_HOST }}
+            SMTP_PORT=${{ secrets.SMTP_PORT }}
+            SMTP_TOKEN=${{ secrets.SMTP_TOKEN }}
+            EOF
+
             docker pull ghcr.io/tobi2k/top-tips
+            docker stop top-tips-server || true
 
-            docker stop top-tips-server
-
-            docker rm top-tips-server
+            docker rm top-tips-server || true
 
             docker run -d --restart unless-stopped \
-            --env API_KEY=${{ secrets.API_KEY }} \
-            --env FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
-            --env FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }} \ 
-            --env FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }} \
-            --env APP_VERSION=${{ secrets.APP_VERSION }} \
-            --env CRON=${{ secrets.CRON }} \
-            --env JWT_SECRET=${{ secrets.JWT_SECRET }} \
-            --env SMTP_HOST=${{ secrets.SMTP_HOST }} \
-            --env SMTP_PORT=${{ secrets.SMTP_PORT }} \
-            --env SMTP_TOKEN=${{ secrets.SMTP_TOKEN }} \
+            --env-file .env
             --network host \
             --name=top-tips-server ghcr.io/tobi2k/top-tips
+
+            rm .env
           host: '${{ secrets.HOST }}'
           user: root
           key: '${{ secrets.PRIVATE_KEY}}'
