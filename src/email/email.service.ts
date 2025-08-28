@@ -11,10 +11,11 @@ import { Group } from 'src/database/entities/group.entity';
 import { GroupMembers } from 'src/database/entities/group-members.entity';
 import { ConfigService } from '@nestjs/config';
 
+import { MailerService } from '@nestjs-modules/mailer';
+
 @Injectable()
 export class EmailService {
   private moment = require('moment');
-  private sgMail = require('@sendgrid/mail');
   private readonly logger = new Logger(EmailService.name);
 
   constructor(
@@ -25,15 +26,14 @@ export class EmailService {
     private connection: Connection,
     @Inject(forwardRef(() => ConfigService))
     private configService: ConfigService,
-  ) {
-    this.sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-  }
+    private readonly mailerService: MailerService
+  ) { }
 
   @Cron('15 12 * * *', { name: 'notifications-email' })
   async handleNotifications() {
     if (this.configService.get<string>('CRON') != 'enabled') {
       this.logger.debug('Cron jobs are not enabled!');
-      return;
+      // return;
     }
     this.logger.debug('Checking for games today and tomorrow');
 
@@ -85,6 +85,7 @@ export class EmailService {
 
       gamedaysTomorrow.sort((x, y) => x - y);
       gamedaysToday.sort((x, y) => x - y);
+
 
       if (gamedaysToday.length > 0)
         this.sendNotification(
@@ -184,7 +185,7 @@ export class EmailService {
     return notGuessed;
   }
 
-  sendNotification(
+  async sendNotification(
     seasonName: string,
     gamedays: number[],
     today: boolean,
@@ -218,62 +219,55 @@ export class EmailService {
       }
     }
 
-    const recepients = [];
+    const recipients = [];
 
     for (let i = 0; i < users.length; i++) {
       const user = users[i];
-      if (today) {
-        recepients.push({
-          to: [
-            {
-              name: user.name,
-              email: user.email,
-            },
-          ],
-          dynamic_template_data: {
-            name: user.name,
-            season: seasonName,
-            gamedays: days,
-            day: 'TODAY',
-            subject: 'TopTips Reminder - There are games TODAY!',
-          },
-        });
-      } else {
-        recepients.push({
-          to: [
-            {
-              name: user.name,
-              email: user.email,
-            },
-          ],
-          dynamic_template_data: {
-            name: user.name,
-            season: seasonName,
-            gamedays: days,
-            day: 'tomorrow',
-            subject: 'TopTips Reminder - There are games tomorrow.',
-          },
-        });
-      }
+      recipients.push({
+        name: user.name, // Given Name
+        email: user.email, // Email Address
+        season: seasonName, // Name of the season for the reminder
+        gamedays: days, // Gamedays with games for reminder
+        day: today ? 'TODAY' : 'tomorrow', // Whether the games are today or tomorrow
+        subject: today ? 'TopTips Reminder - There are games TODAY!' : 'TopTips Reminder - There are games tomorrow.',
+      });
     }
-    if (recepients.length > 0) {
-      const msg = {
-        from: { name: 'TopTips', email: 'toptips@kalmbach.dev' },
-        subject: today
-          ? 'TopTips Reminder - There are games TODAY!'
-          : 'TopTips Reminder - There are games tomorrow.',
-        personalizations: recepients,
-        template_id: 'd-bfee3bf938974af998f60f068f4171c2',
-      };
-
-      this.sgMail
-        .send(msg)
-        .then(() => {
-          this.logger.debug('Email sent');
-        })
-        .catch((error: any) => {
-          this.logger.error(error);
-        });
+    if (recipients.length > 0) {
+      for (let i = 0; i < recipients.length; i++) {
+        const recipient = recipients[i];
+        try {
+          const sendMailParams = {
+            to: recipient.name + "<" + recipient.email + ">",
+            from: "TopTips <admin@toptips.page>",
+            subject: recipient.subject,
+            template: 'remind-guess',
+            context: {
+              name: recipient.name,
+              season: recipient.season,
+              gamedays: recipient.gamedays,
+              day: recipient.day,
+            },
+            attachments: [
+              { filename: 'logo.png', path: __dirname + '/../templates/icon.png', cid: 'logo@toptips.page' },
+              { filename: 'bell.png', path: __dirname + '/../templates/bell.png', cid: 'bell@toptips.page' }
+            ]
+          };
+          const response = await this.mailerService.sendMail(sendMailParams);
+          this.logger.log(
+            `Email sent successfully to recipients with the following parameters : ${JSON.stringify(
+              sendMailParams,
+            )}`,
+            response,
+          );
+        } catch (error) {
+          this.logger.error(
+            `Error while sending mail with the following parameters : ${JSON.stringify(
+              recipient,
+            )}`,
+            error,
+          );
+        }
+      }
     }
   }
 
@@ -305,8 +299,8 @@ export class EmailService {
         } else {
           this.logger.debug(
             'Subscribing for ' +
-              user.username +
-              ' to day before notifications.',
+            user.username +
+            ' to day before notifications.',
           );
           await this.connection
             .getRepository(EmailNotify)
@@ -355,8 +349,8 @@ export class EmailService {
         } else {
           this.logger.debug(
             'Unsubscribing for ' +
-              user.username +
-              ' to day before notifications.',
+            user.username +
+            ' to day before notifications.',
           );
           await this.connection
             .getRepository(EmailNotify)

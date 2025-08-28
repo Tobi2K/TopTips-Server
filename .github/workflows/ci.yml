@@ -1,69 +1,67 @@
 name: CI
-
-on:
+'on':
   push:
     branches:
       - main
-
-env:
-  API_KEY: ${{ secrets.API_KEY }}
-  FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
-  FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
-  FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
-  SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
-  APP_VERSION: ${{ secrets.APP_VERSION }}
-  CRON: ${{ secrets.CRON }}
-  JWT_SECRET: ${{ secrets.JWT_SECRET }}
-
+# env:
+#   API_KEY: '${{ secrets.API_KEY }}'
+#   FIREBASE_PROJECT_ID: '${{ secrets.FIREBASE_PROJECT_ID }}'
+#   FIREBASE_PRIVATE_KEY: '${{ secrets.FIREBASE_PRIVATE_KEY }}'
+#   FIREBASE_CLIENT_EMAIL: '${{ secrets.FIREBASE_CLIENT_EMAIL }}'
+#   APP_VERSION: '${{ secrets.APP_VERSION }}'
+#   CRON: '${{ secrets.CRON }}'
+#   JWT_SECRET: '${{ secrets.JWT_SECRET }}'
+#   SMTP_HOST: '${{ secrets.SMTP_HOST }}'
+#   SMTP_PORT: '${{ secrets.SMTP_PORT }}'
+#   SMTP_TOKEN: '${{ secrets.SMTP_TOKEN }}'
 jobs:
   build:
     runs-on: ubuntu-latest
-
     outputs:
-      branch_name: ${{ steps.branch-name.outputs.current_branch }}
-
+      branch_name: '${{ steps.branch-name.outputs.current_branch }}'
     steps:
       - uses: actions/checkout@v2
-
       - name: Docker Login
         uses: docker/login-action@v1.10.0
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
+          username: '${{ github.actor }}'
+          password: '${{ secrets.GITHUB_TOKEN }}'
       - name: Branch Name
         uses: tj-actions/branch-names@v7.0.7
         id: branch-name
-
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
-          build-args: |
-            API_KEY=${{ secrets.API_KEY }}
-            FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
-            FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}
-            FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}
-            SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}
-            APP_VERSION=${{ secrets.APP_VERSION }}
-            CRON=${{ secrets.CRON }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
           push: true
           tags: ghcr.io/tobi2k/top-tips
-
   deploy:
     needs: build
     runs-on: ubuntu-latest
-
     steps:
       - name: SSH into server and pull image
         uses: fifsky/ssh-action@master
         with:
-          command: |
+          command: >
             docker pull ghcr.io/tobi2k/top-tips
+
             docker stop top-tips-server
+
             docker rm top-tips-server
-            docker run -d --restart unless-stopped --network host --name=top-tips-server ghcr.io/tobi2k/top-tips
-          host: ${{ secrets.HOST }}
+
+            docker run -d --restart unless-stopped \
+            -e API_KEY=${{ secrets.API_KEY }} \
+            -e FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
+            -e FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }} \ 
+            -e FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }} \
+            -e APP_VERSION=${{ secrets.APP_VERSION }} \
+            -e CRON=${{ secrets.CRON }} \
+            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+            -e SMTP_HOST=${{ secrets.SMTP_HOST }} \
+            -e SMTP_PORT=${{ secrets.SMTP_PORT }} \
+            -e SMTP_TOKEN=${{ secrets.SMTP_TOKEN }} \
+            --network host \
+            --name=top-tips-server ghcr.io/tobi2k/top-tips
+          host: '${{ secrets.HOST }}'
           user: root
-          key: ${{ secrets.PRIVATE_KEY}}
+          key: '${{ secrets.PRIVATE_KEY}}'

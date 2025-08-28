@@ -19,6 +19,8 @@ import { CronService } from 'src/cron/cron.service';
 import { StandingService } from 'src/standing/standing.service';
 import { Points } from 'src/database/entities/points.entity';
 import { EmailService } from './email.service';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
 
 @Module({
   imports: [
@@ -34,6 +36,32 @@ import { EmailService } from './email.service';
     ]),
     HttpModule,
     ConfigModule,
+    MailerModule.forRootAsync({
+      useFactory: () => ({
+        transport: {
+          host: process.env.SMTP_HOST,
+          port: +process.env.SMTP_PORT,
+          secure: false,
+          tls: {
+            rejectUnauthorized: false,
+          },
+          auth: {
+            user: 'admin@toptips.page',
+            pass: process.env.SMTP_TOKEN
+          },
+        },
+        defaults: {
+          from: process.env.FROM,
+        },
+        template: {
+          dir: __dirname + '/../templates',
+          adapter: new PugAdapter(),
+          options: {
+            strict: true,
+          },
+        },
+      }),
+    }),
   ],
   providers: [
     EmailService,
@@ -46,5 +74,6 @@ import { EmailService } from './email.service';
     StandingService,
   ],
   controllers: [EmailController],
+  exports: [EmailService],
 })
-export class EmailModule {}
+export class EmailModule { }

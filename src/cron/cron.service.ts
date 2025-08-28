@@ -37,7 +37,7 @@ export class CronService {
     private readonly httpService: HttpService,
     @Inject(forwardRef(() => ConfigService))
     private configService: ConfigService,
-  ) {}
+  ) { }
 
   @Cron(CronExpression.EVERY_DAY_AT_NOON, { name: 'notifications' })
   async handleNotifications() {
@@ -272,10 +272,10 @@ export class CronService {
   async checkIfGamedayIsFinished(game: Game) {
     this.logger.debug(
       'Checking if ' +
-        game.season.name +
-        ' gameday ' +
-        game.gameday +
-        ' has finshed...',
+      game.season.name +
+      ' gameday ' +
+      game.gameday +
+      ' has finshed...',
     );
     let games = await this.gameRepository.find({
       where: {
@@ -361,12 +361,12 @@ export class CronService {
     let formattedStandings =
       points.length > 0
         ? '1. Place: ' +
-          points[0].name +
-          ' with ' +
-          points[0].score +
-          ' points. (Overall: ' +
-          points[0].total +
-          ')'
+        points[0].name +
+        ' with ' +
+        points[0].score +
+        ' points. (Overall: ' +
+        points[0].total +
+        ')'
         : 'Nobody played this gameday.';
     let place = 1;
     let skipped = 0;
@@ -441,10 +441,10 @@ export class CronService {
         // Response is a message ID string.
         this.logger.debug(
           'Successfully sent group message for ' +
-            groupName +
-            ' (id: ' +
-            group_id +
-            ')',
+          groupName +
+          ' (id: ' +
+          group_id +
+          ')',
         );
       })
       .catch((error) => {
@@ -507,7 +507,7 @@ export class CronService {
         }
       }
       const is12PM = this.moment().hour() === 12;
-      
+
       if (!gameToday) {
         if (!is12PM) continue; // only sync seasons with games today, except at 12PM
       }
@@ -545,7 +545,7 @@ export class CronService {
   async syncCurrentGames() { // This is a method to custom sync games when called manually, same as syncImportantGames
     if (this.configService.get<string>('CRON') != 'enabled') {
       this.logger.debug('Cron jobs are not enabled!');
-      // return;
+      return;
     }
     this.logger.debug('Syncing current games and scores...');
 
@@ -581,10 +581,10 @@ export class CronService {
 
         this.syncPoints(data);
       }
-      
+
       this.connection.getRepository(Season).update(season, {
-          current: false,
-        });
+        current: false,
+      });
 
       await new Promise((res) => setTimeout(res, 6000));
     }
@@ -831,10 +831,10 @@ export class CronService {
     );
     const rgb = result
       ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16),
+      }
       : null;
 
     // calculate if color is visually light or dark
@@ -853,7 +853,7 @@ export class CronService {
   async syncStanding() {
     if (this.configService.get<string>('CRON') != 'enabled') {
       this.logger.debug('Cron jobs are not enabled!');
-      // return;
+      return;
     }
     this.logger.debug('Syncing standings...');
     const importantSeasons = await this.getActiveSeasons();

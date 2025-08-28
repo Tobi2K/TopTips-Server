@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <a href="http://app.kalmbach.dev"><img src="./icon.png" alt="Top Tips" width="200"></a>
+  <a href="http://toptips.page"><img src="./icon.png" alt="Top Tips" width="200"></a>
   <br>
   Top Tips - Server
   <br>
@@ -48,7 +48,7 @@
 
 ## What?
 
-This is the server part of [Top Tips](https://github.com/Tobi2K/TopTips-App). Top Tips is a handball guessing game available on [Google Play](https://play.google.com/store/apps/details?id=app.kalmbach.dev) or [online](https://app.kalmbach.dev).
+This is the server part of [Top Tips](https://github.com/Tobi2K/TopTips-App). Top Tips is a handball guessing game available on [Google Play](https://play.google.com/store/apps/details?id=app.kalmbach.dev) or [online](https://toptips.page).
 
 ## How?
 
@@ -85,4 +85,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 > [kalmbach.dev](https://www.kalmbach.dev) &nbsp;&middot;&nbsp;
 > GitHub [@Tobi2K](https://github.com/Tobi2K) &nbsp;&middot;&nbsp;
-> Email [t.kalmbach35@gmail.com](mailto:t.kalmbach35@gmail.com)
+> Email [tobias@kalmbach.dev](mailto:tobias@kalmbach.dev)

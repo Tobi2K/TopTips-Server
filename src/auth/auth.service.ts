@@ -13,18 +13,17 @@ import { Guess } from 'src/database/entities/guess.entity';
 import { Points } from 'src/database/entities/points.entity';
 import { Group } from 'src/database/entities/group.entity';
 import { GroupMembers } from 'src/database/entities/group-members.entity';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class AuthService {
-  private sgMail = require('@sendgrid/mail');
   private readonly logger = new Logger(AuthService.name);
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private connection: Connection,
-  ) {
-    this.sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-  }
+    private readonly mailerService: MailerService
+  ) { }
 
   async validateUser(name: string, pass: string) {
     const user = await this.usersService.findOne(name);
@@ -111,46 +110,39 @@ export class AuthService {
 
     if (!db_user.email) {
       throw new HttpException(
-        'No backup email set! Please contact me at tobias@kalmbach.dev.',
+        'No backup email set! Please contact me at admin@toptips.page.',
         HttpStatus.NOT_FOUND,
       );
     }
     const new_pass = randtoken.generate(10);
-    const msg = {
-      from: { name: 'TopTips', email: 'tobias@kalmbach.dev' },
-      subject: 'TopTips - Password Reset',
-      personalizations: [
-        {
-          to: [
-            {
-              name: username,
-              email: db_user.email,
-            },
-          ],
-          dynamic_template_data: {
+    bcrypt.hash(new_pass, 10, async (_err, hash) => {
+      try {
+        const sendMailParams = {
+          to: username + "<" + db_user.email + ">",
+          from: "TopTips <admin@toptips.page>",
+          subject: 'TopTips - Password Reset',
+          template: 'forgot-password',
+          context: {
             name: username,
             password: new_pass,
           },
-        },
-      ],
-      template_id: 'd-2804cb14adf44c52b0e02934ece2cdda',
-    };
-    bcrypt.hash(new_pass, 10, (_err, hash) => {
-      this.sgMail
-        .send(msg)
-        .then(() => {
-          this.logger.debug('Email sent');
-          this.connection.getRepository(User).update(db_user, {
-            password: hash,
-          });
-        })
-        .catch((error: any) => {
-          this.logger.error(error);
-          throw new HttpException(
-            'Unable to set your password',
-            HttpStatus.FORBIDDEN,
-          );
+          attachments: [
+            { filename: 'logo.png', path: __dirname + '/../templates/icon.png', cid: 'logo@toptips.page' },
+          ]
+        };
+        await this.mailerService.sendMail(sendMailParams);
+
+        this.logger.debug('Email sent');
+        this.connection.getRepository(User).update(db_user, {
+          password: hash,
         });
+      } catch (error) {
+        this.logger.error(error);
+        throw new HttpException(
+          'Unable to set your password',
+          HttpStatus.FORBIDDEN,
+        );
+      }
     });
   }
 
