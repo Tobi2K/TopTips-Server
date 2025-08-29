@@ -541,19 +541,21 @@ export class CronService {
     }
   }
 
-  @Cron('*/15 * * * *', { name: 'sync-important-games' }) // At minute 0 past hour 0, 12, and every hour from 16 through 23. => 10 times daily per important season
+  @Cron('*/15 * * * *', { name: 'sync-current-games' }) // At minute 0 past hour 0, 12, and every hour from 16 through 23. => 10 times daily per important season
   async syncCurrentGames() { // This is a method to custom sync games when called manually, same as syncImportantGames
     if (this.configService.get<string>('CRON') != 'enabled') {
       this.logger.debug('Cron jobs are not enabled!');
       return;
     }
-    this.logger.debug('Syncing current games and scores...');
 
     const seasons = await this.connection.getRepository(Season).find({
       where: {
         current: true,
       },
     });
+    if (seasons.length > 0) {
+      this.logger.debug('Syncing current games and scores...');
+    }
     for (let i = 0; i < seasons.length; i++) {
       const season = seasons[i];
       const x = options as any;
