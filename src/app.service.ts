@@ -32,6 +32,9 @@ export class AppService {
           version: versionNumber,
         },
       });
+      if (!dbNotes) {
+        return [];
+      }
 
       // "2.9.4" is the first version in patch notes
       let lastVersion = dbuser.last_seen_version;
