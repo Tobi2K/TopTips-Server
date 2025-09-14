@@ -32,6 +32,11 @@ export class CompetitionController {
     return this.competitionService.getCurrentSection(group_id);
   }
 
+  @Get('current/month/:group_id')
+  getCurrentMonthSection(@Param('group_id') group_id: number) {
+    return this.competitionService.getCurrentMonthSection(group_id);
+  }
+
   @Get('countries')
   async getCountries() {
     return await this.competitionService.getCountries();

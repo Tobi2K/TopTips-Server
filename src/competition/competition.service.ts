@@ -137,6 +137,23 @@ export class CompetitionService {
     }
   }
 
+  async getCurrentMonthSection(group_id: number) {
+    const dbgroup = await this.connection.getRepository(Group).findOne({
+      where: { id: group_id },
+    });
+    if (dbgroup) {
+      const start = this.moment(dbgroup.season.start_date).startOf('month');
+      const now = this.moment().startOf('month');
+
+      return now.diff(start, 'months') + 1;
+    } else {
+      throw new HttpException(
+        'The requested season was not found.',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+  }
+
   async getCountries() {
     return await this.connection
       .getRepository(Competition)
