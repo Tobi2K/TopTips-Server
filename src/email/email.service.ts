@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, HttpException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Game } from 'src/database/entities/game.entity';
 import { Guess } from 'src/database/entities/guess.entity';
@@ -425,14 +425,18 @@ export class EmailService {
           });
         }
       }
-    }
-
     const dbemailnotify = await this.connection
       .getRepository(EmailNotify)
       .find({
         where: { user: dbuser },
       });
 
-    return dbemailnotify;
+    const filteredNotify = dbemailnotify.filter((val) => activeID.includes(val.season.id))
+
+    return filteredNotify;
+    } else {
+      throw new HttpException('User not found.', HttpStatus.NOT_FOUND);
+    }
+
   }
 }
