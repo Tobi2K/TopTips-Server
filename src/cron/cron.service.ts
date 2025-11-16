@@ -147,9 +147,13 @@ export class CronService {
         // The season starts in less than 8 days or has already started (also includes past seasons!)
         this.moment(s.season.start_date).subtract(8, 'days').isSameOrBefore(this.moment()) &&
         // The seasons has not ended or ended in the last 8 days (also includes future seasons!)
-        this.moment(s.season.end_date).add(8, 'days').isSameOrAfter(this.moment())
+        this.moment(s.season.end_date).add(8, 'days').isSameOrAfter(this.moment()) &&
+        s.season.important == 1
       );
     });
+
+    console.log(activeGroups);
+    return
 
     const seasons: Season[] = [];
     for (let i = 0; i < activeGroups.length; i++) {
