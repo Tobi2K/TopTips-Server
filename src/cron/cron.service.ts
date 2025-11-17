@@ -152,9 +152,6 @@ export class CronService {
       );
     });
 
-    console.log(activeGroups);
-    return
-
     const seasons: Season[] = [];
     for (let i = 0; i < activeGroups.length; i++) {
       const season = activeGroups[i].season;
