@@ -174,6 +174,11 @@ export class CronService {
     this.logger.debug('Syncing games and times... | ' + new_season.name);
     for (let i = 0; i < data.length; i++) {
       const game = data[i];
+      // DIRTY FIX FOR EUROPEAN CHAMPIONSHIP 2026 --> Games for Euro cup since 2025 are all combined into a single competition, so we split only the games after Jan. 1st 2026
+      if (new_season.id == 1743) {
+        if (this.moment('2026-01-01') > this.moment(game.date))
+          continue;
+      }
 
       const new_eventID = game.id;
       let new_gameday = game.week;
