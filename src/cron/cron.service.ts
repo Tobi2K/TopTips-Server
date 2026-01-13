@@ -537,6 +537,19 @@ export class CronService {
 
         this.syncPoints(data);
       }
+      // DIRTY FIX FOR EUROPEAN CHAMPIONSHIP 2026 --> Games for Euro cup since 2025 are all combined into a single competition, so we split only the games after Jan. 1st 2026
+      if (season.id == 1743) {
+        const filtered_data = data.filter(
+          (e) => this.moment('2026-01-01') < this.moment(e.date),
+        );
+        await this.syncGames(filtered_data, season);
+
+        this.syncPoints(filtered_data);
+      } else {
+        await this.syncGames(data, season);
+
+        this.syncPoints(data);
+      }
 
       await new Promise((res) => setTimeout(res, 6000));
     }
@@ -575,6 +588,19 @@ export class CronService {
       if (season.id == 1075) {
         const filtered_data = data.filter(
           (e) => this.moment('2025-01-01') < this.moment(e.date),
+        );
+        await this.syncGames(filtered_data, season);
+
+        this.syncPoints(filtered_data);
+      } else {
+        await this.syncGames(data, season);
+
+        this.syncPoints(data);
+      }
+      // DIRTY FIX FOR EUROPEAN CHAMPIONSHIP 2026 --> Games for Euro cup since 2025 are all combined into a single competition, so we split only the games after Jan. 1st 2026
+      if (season.id == 1743) {
+        const filtered_data = data.filter(
+          (e) => this.moment('2026-01-01') < this.moment(e.date),
         );
         await this.syncGames(filtered_data, season);
 
