@@ -171,7 +171,7 @@ export class CronService {
   }
 
   async syncGames(data: any[], new_season: Season) {
-    this.logger.debug('Syncing games and times... | ' + new_season.name);
+    this.logger.debug('Syncing games and times... | ' + new_season.name + " " + new_season.id);
     for (let i = 0; i < data.length; i++) {
       const game = data[i];
       // DIRTY FIX FOR EUROPEAN CHAMPIONSHIP 2026 --> Games for Euro cup since 2025 are all combined into a single competition, so we split only the games after Jan. 1st 2026
@@ -179,6 +179,7 @@ export class CronService {
         if (this.moment('2026-01-01') > this.moment(game.date))
           continue;
       }
+      this.logger.debug("Syncing game " + game.id)
 
       const new_eventID = game.id;
       let new_gameday = game.week;
@@ -595,6 +596,8 @@ export class CronService {
         const filtered_data = data.filter(
           (e) => this.moment('2026-01-01') < this.moment(e.date),
         );
+        console.log(filtered_data)
+        console.log(filtered_data.length)
         await this.syncGames(filtered_data, season);
 
         this.syncPoints(filtered_data);
