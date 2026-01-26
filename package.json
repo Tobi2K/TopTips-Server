@@ -46,7 +46,7 @@
   "devDependencies": {
     "@nestjs/cli": "^11.0.12",
     "@types/bcrypt": "^6.0.0",
-    "@types/node": "^24.9.1",
+    "@types/node": "^25.0.9",
     "@types/nodemailer": "^7.0.4",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
