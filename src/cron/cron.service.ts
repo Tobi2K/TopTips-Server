@@ -642,7 +642,7 @@ export class CronService {
     }
   }
 
-  @Cron('0 3 * * 1', { name: 'sync-leagues' }) // At 03:00 on Monday. => 1 time weekly (not per season)
+  @Cron('15 10 * * 3', { name: 'sync-leagues' }) // At 03:00 on Monday. => 1 time weekly (not per season)
   async syncLeagues() {
     if (this.configService.get<string>('CRON') != 'enabled') {
       this.logger.debug('Cron jobs are not enabled!');
@@ -702,6 +702,7 @@ export class CronService {
           seas.name = comp.name + ' ' + season.season;
           seas.start_date = new Date(season.start + 'T00:00:00.000Z');
           seas.end_date = new Date(season.end + 'T00:00:00.000Z');
+          seas.current = false;
           seas.competition = comp;
           seasonRepository.save(seas);
         } else {
