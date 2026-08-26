@@ -642,7 +642,7 @@ export class CronService {
     }
   }
 
-  @Cron('*/15 * * * *', { name: 'sync-leagues' }) // At 03:00 on Monday. => 1 time weekly (not per season)
+  @Cron('0 3 * * 1', { name: 'sync-leagues' }) // At 03:00 on Monday. => 1 time weekly (not per season)
   async syncLeagues() {
     if (this.configService.get<string>('CRON') != 'enabled') {
       this.logger.debug('Cron jobs are not enabled!');
