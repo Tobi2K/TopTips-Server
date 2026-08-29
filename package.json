@@ -21,7 +21,7 @@
     "@nestjs/common": "^11.1.8",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.8",
-    "@nestjs/jwt": "^11.0.1",
+    "@nestjs/jwt": "^11.0.2",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.1.8",
     "@nestjs/schedule": "^6.0.1",
@@ -40,7 +40,7 @@
     "rand-token": "^1.0.1",
     "rimraf": "^6.1.2",
     "rxjs": "^7.8.2",
-    "typeorm": "^0.3.27",
+    "typeorm": "^0.3.28",
     "typeorm-naming-strategies": "^4.1.0"
   },
   "devDependencies": {
